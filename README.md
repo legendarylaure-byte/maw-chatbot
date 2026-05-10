@@ -1,36 +1,79 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MAWbot 🤖✨
+
+Official AI Assistant of **MAW Group of Companies**
+
+Bilingual (English + Nepali) AI chatbot with voice support, games, quizzes, and an admin dashboard. Powered by Google Gemini 2.0, ElevenLabs TTS, Firebase, and hosted on Vercel.
+
+## Features
+
+- 💬 **Bilingual Chat** — English & Nepali with auto-detection
+- 🎤 **Voice Input/Output** — Speech-to-Text + ElevenLabs male/female voices
+- 🧠 **Memory System** — Admin-injected knowledge + user learning
+- 😂 **Jokes & Humor** — Positive, curated joke bank
+- 🎮 **Games & Quizzes** — Trivia, word games, daily challenges, riddles
+- 🎛️ **Admin Dashboard** — Memory, jokes, quizzes, languages, voices, analytics
+- 🔒 **Security-First** — Rate limiting, input sanitization, no hardcoded secrets
+- 📱 **PWA** — Installable on mobile home screen
+- 🌈 **Seasonal Themes** — Auto-detects Dashain, Tihar, Holi, and more
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Frontend | Next.js 16, TypeScript, Tailwind CSS v4 |
+| AI | Google Gemini 2.0 Flash |
+| Voice | ElevenLabs (Eleven v3) + Web Speech API |
+| Auth | Firebase Auth (Email + Google) |
+| Database | Firebase Firestore |
+| Storage | Firebase Storage |
+| Hosting | Vercel → mawbot.vyomai.cloud |
+| Crawler | Node.js + axios + cheerio |
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+# Install dependencies
+npm install
+
+# Copy environment variables
+cp .env.example .env.local
+# Fill in your API keys in .env.local
+
+# Run development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Environment Variables
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+See `.env.example` for required variables. All secrets go in `.env.local` (gitignored).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Security
 
-## Learn More
+```bash
+# Scan for hardcoded secrets
+npm run security-scan
+```
 
-To learn more about Next.js, take a look at the following resources:
+**Rate Limits:**
+- Auth: 5 requests / 15 min
+- Chat: 30 requests / 1 min
+- Admin: 30 requests / 1 min
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Crawler
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+# Crawl all 213 MAW websites
+npm run crawl
+```
 
-## Deploy on Vercel
+## Deployment
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Push to GitHub
+2. Connect repo to Vercel
+3. Add environment variables in Vercel dashboard
+4. Set domain: `mawbot.vyomai.cloud`
+5. In Hostinger DNS: `CNAME mawbot → cname.vercel-dns.com`
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## License
+
+Private — MAW Group of Companies

@@ -1,0 +1,39 @@
+"use client";
+
+interface SuggestedPromptsProps {
+  onSelect: (text: string) => void;
+  language: "en" | "np";
+}
+
+const prompts = {
+  en: [
+    "Tell me about MAW Group",
+    "What brands do you have?",
+    "Tell me a joke! 😂",
+    "Play a quiz! 🎮",
+  ],
+  np: [
+    "MAW Group को बारेमा बताउनुहोस्",
+    "तपाईंको ब्रान्डहरू के के हुन्?",
+    "एउटा जोक सुनाउनुहोस्! 😂",
+    "क्विज खेलौं! 🎮",
+  ],
+};
+
+export function SuggestedPrompts({ onSelect, language }: SuggestedPromptsProps) {
+  const items = prompts[language] || prompts.en;
+
+  return (
+    <div className="px-4 pb-2 flex gap-2 overflow-x-auto scrollbar-none">
+      {items.map((prompt) => (
+        <button
+          key={prompt}
+          onClick={() => onSelect(prompt)}
+          className="shrink-0 px-3 py-1.5 text-xs rounded-full glass hover:bg-white/10 hover:border-[#cf107a]/50 border border-white/10 transition whitespace-nowrap text-white/70 hover:text-white"
+        >
+          {prompt}
+        </button>
+      ))}
+    </div>
+  );
+}

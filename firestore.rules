@@ -1,0 +1,82 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Admin-only collections
+    match /memory/{doc} {
+      allow read, write: if request.auth != null && request.auth.token.role == 'admin';
+    }
+
+    match /crawled_sites/{doc} {
+      allow read, write: if request.auth != null && request.auth.token.role == 'admin';
+    }
+
+    match /crawled_pages/{doc} {
+      allow read, write: if request.auth != null && request.auth.token.role == 'admin';
+    }
+
+    match /crawled_documents/{doc} {
+      allow read, write: if request.auth != null && request.auth.token.role == 'admin';
+    }
+
+    match /admin_settings/{doc} {
+      allow read, write: if request.auth != null && request.auth.token.role == 'admin';
+    }
+
+    // User conversations - only the owning user or admin can read
+    match /conversations/{doc} {
+      allow read: if request.auth != null && (
+        request.auth.uid == resource.data.userId ||
+        request.auth.token.role == 'admin'
+      );
+      allow create: if request.auth != null;
+      allow delete: if request.auth != null && request.auth.token.role == 'admin';
+    }
+
+    // User memory - only the owning user or admin can read/write
+    match /user_memory/{doc} {
+      allow read: if request.auth != null && (
+        request.auth.uid == resource.data.userId ||
+        request.auth.token.role == 'admin'
+      );
+      allow create: if request.auth != null;
+      allow delete: if request.auth != null && request.auth.token.role == 'admin';
+    }
+
+    // Feedback - authenticated users can create, admin can read
+    match /feedback/{doc} {
+      allow read: if request.auth != null && request.auth.token.role == 'admin';
+      allow create: if request.auth != null;
+    }
+
+    // Game scores - users can create, admin can read
+    match /game_scores/{doc} {
+      allow read: if request.auth != null && request.auth.token.role == 'admin';
+      allow create: if request.auth != null;
+    }
+
+    // Daily challenges - admin managed
+    match /daily_challenges/{doc} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.token.role == 'admin';
+    }
+
+    // Streaks - user specific
+    match /streaks/{doc} {
+      allow read: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow write: if request.auth != null && request.auth.uid == resource.data.userId;
+    }
+
+    // Users collection
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null && request.auth.token.role == 'admin';
+    }
+
+    // Deny everything else
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
