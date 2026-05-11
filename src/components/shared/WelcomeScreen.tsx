@@ -334,15 +334,15 @@ export function WelcomeScreen({ language, onStart, darkMode, onDarkModeChange }:
         <p className="text-[10px] uppercase tracking-widest text-[var(--text-muted)] mb-4 text-center font-medium">
           {language === "np" ? "ब्रान्डमा क्लिक गर्नुहोस्" : "Click a brand to learn more"}
         </p>
-        <div className="overflow-hidden relative">
-          <div className="flex gap-4 animate-brand-scroll">
+        <div className="overflow-hidden relative" style={{ maskImage: "linear-gradient(to right, transparent, black 3%, black 97%, transparent)", WebkitMaskImage: "linear-gradient(to right, transparent, black 3%, black 97%, transparent)" }}>
+          <div className="flex gap-4 animate-brand-scroll" style={{ animationDuration: "80s" }}>
             {[...brands, ...brands].map((brand, i) => (
               <button
                 key={`${brand.name}-${i}`}
                 onClick={() => handleBrandClick(brand.name)}
                 className="shrink-0 flex items-center gap-3 px-5 py-3 rounded-xl border border-[var(--border-color)] bg-[var(--bg-glass)] card-hover cursor-pointer transition-all duration-300 hover:border-[var(--color-maw-indigo)]/50 hover:shadow-lg hover:shadow-[var(--color-maw-indigo)]/10"
               >
-                <div className="w-10 h-10 rounded-full bg-white dark:bg-white/10 flex items-center justify-center p-1 shrink-0">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--color-maw-blue)] to-[var(--color-maw-indigo)] flex items-center justify-center p-1 shrink-0">
                   <img
                     src={brand.logo}
                     alt={brand.name}

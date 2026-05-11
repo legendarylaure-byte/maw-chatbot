@@ -184,7 +184,7 @@ body {
   0% { transform: translateX(0); }
   100% { transform: translateX(-50%); }
 }
-.animate-brand-scroll { animation: brand-scroll 40s linear infinite; }
+.animate-brand-scroll { animation: brand-scroll 80s linear infinite; }
 
 /* === Card hover === */
 .card-hover {

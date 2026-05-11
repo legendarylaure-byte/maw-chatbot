@@ -27,16 +27,18 @@ export function FeedbackButtons({ messageId }: FeedbackButtonsProps) {
       <button
         onClick={() => sendFeedback("up")}
         className={`p-1 rounded transition ${
-          sent === "up" ? "text-green-400" : "text-white/30 hover:text-green-400"
+          sent === "up" ? "text-green-500" : "text-[var(--text-muted)] hover:text-green-500"
         }`}
+        title="Helpful"
       >
         <ThumbsUp size={12} />
       </button>
       <button
         onClick={() => sendFeedback("down")}
         className={`p-1 rounded transition ${
-          sent === "down" ? "text-red-400" : "text-white/30 hover:text-red-400"
+          sent === "down" ? "text-red-500" : "text-[var(--text-muted)] hover:text-red-500"
         }`}
+        title="Not helpful"
       >
         <ThumbsDown size={12} />
       </button>

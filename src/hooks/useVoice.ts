@@ -45,23 +45,33 @@ export function useVoice() {
     }
   }, []);
 
-  const playAudio = useCallback(async (text: string, voiceId: string) => {
-    try {
-      const res = await fetch("/api/tts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, voiceId }),
-      });
-      if (!res.ok) throw new Error("TTS failed");
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const audio = new Audio(url);
-      audio.play();
-    } catch {
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = "en-US";
-      speechSynthesis.speak(utterance);
+  const playAudio = useCallback(async (text: string, voiceId?: string, lang?: string) => {
+    // Try ElevenLabs first if voiceId is provided
+    if (voiceId) {
+      try {
+        const res = await fetch("/api/tts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text, voiceId }),
+        });
+        if (res.ok) {
+          const blob = await res.blob();
+          const url = URL.createObjectURL(blob);
+          const audio = new Audio(url);
+          audio.play();
+          return;
+        }
+      } catch {}
     }
+
+    // Fallback to browser speech synthesis (always works, no API key needed)
+    try {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = lang || "en-US";
+      utterance.rate = 1.1;
+      utterance.pitch = 1.0;
+      speechSynthesis.speak(utterance);
+    } catch {}
   }, []);
 
   return { isListening, transcript, startListening, stopListening, playAudio };
