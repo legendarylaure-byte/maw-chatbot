@@ -8,6 +8,7 @@ interface Message {
 }
 
 export function useChat() {
+  const [showWelcome, setShowWelcome] = useState(true);
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
@@ -62,7 +63,17 @@ export function useChat() {
     }
   }, [addMessage, isLoading, language]);
 
+  const startChat = useCallback((initialMessage?: string) => {
+    setShowWelcome(false);
+    if (initialMessage) {
+      setTimeout(() => sendMessage(initialMessage), 100);
+    }
+  }, [sendMessage]);
+
   return {
+    showWelcome,
+    setShowWelcome,
+    startChat,
     messages,
     input,
     setInput,

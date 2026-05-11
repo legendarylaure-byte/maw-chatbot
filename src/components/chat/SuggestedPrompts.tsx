@@ -29,7 +29,7 @@ export function SuggestedPrompts({ onSelect, language }: SuggestedPromptsProps) 
         <button
           key={prompt}
           onClick={() => onSelect(prompt)}
-          className="shrink-0 px-3 py-1.5 text-xs rounded-full glass hover:bg-white/10 hover:border-[#cf107a]/50 border border-white/10 transition whitespace-nowrap text-white/70 hover:text-white"
+          className="shrink-0 px-4 py-2 text-xs rounded-xl border border-[var(--color-maw-indigo)]/30 bg-[var(--color-maw-indigo)]/5 hover:bg-[var(--color-maw-indigo)]/15 hover:border-[var(--color-maw-indigo)]/60 transition-all whitespace-nowrap text-[var(--text-secondary)] hover:text-[var(--color-maw-indigo)] font-medium"
         >
           {prompt}
         </button>

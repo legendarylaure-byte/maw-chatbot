@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
         const token = authHeader.slice(7);
         const decoded = await adminAuth.verifyIdToken(token);
         userId = decoded.uid;
-      } catch {}
+      } catch (e) { console.error("🔑 auth token verification failed:", e); }
     }
 
     const rateLimitKey = getRateLimitKey(ip, userId);
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
           }
         }
       }
-    } catch {}
+    } catch (e) { console.error("📚 bot knowledge/memory fetch failed:", e); }
 
     const messages = [{ role: "user" as const, content: message }];
     const response = await generateChatResponse(messages, contextKnowledge);
@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
           { role: "user", content: message },
           { role: "assistant", content: response },
         ], language);
-      } catch {}
+      } catch (e) { console.error("💾 conversation save failed:", e); }
     }
 
     return NextResponse.json({ response });

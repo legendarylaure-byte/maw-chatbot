@@ -6,24 +6,36 @@ import { ChatBubble } from "@/components/chat/ChatBubble";
 import { ChatInput } from "@/components/chat/ChatInput";
 import { TypingIndicator } from "@/components/chat/TypingIndicator";
 import { SuggestedPrompts } from "@/components/chat/SuggestedPrompts";
+import { WelcomeScreen } from "@/components/shared/WelcomeScreen";
 import { SeasonalDecorations } from "@/components/shared/SeasonalDecorations";
 import { TriviaQuiz } from "@/components/games/TriviaQuiz";
 import { WordGame } from "@/components/games/WordGame";
 import { RiddleCard } from "@/components/games/RiddleCard";
 import { PersonalityQuiz } from "@/components/games/PersonalityQuiz";
 import { AuthProvider } from "@/hooks/useAuth";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Gamepad2, X } from "lucide-react";
 
 type GameTab = "trivia" | "word" | "riddle" | "personality" | null;
 
 function ChatContent() {
-  const { messages, input, setInput, isLoading, language, setLanguage, sendMessage, messagesEndRef } = useChat();
+  const { showWelcome, startChat, messages, input, setInput, isLoading, language, setLanguage, sendMessage, messagesEndRef } = useChat();
   const [darkMode, setDarkMode] = useState(true);
   const [selectedVoice, setSelectedVoice] = useState("");
   const [activeGame, setActiveGame] = useState<GameTab>(null);
 
-  const showPrompts = messages.length === 1;
+  // Sync darkMode state with <html> class + localStorage
+  useEffect(() => {
+    const root = document.documentElement;
+    if (darkMode) {
+      root.classList.add("dark");
+    } else {
+      root.classList.remove("dark");
+    }
+    localStorage.setItem("mawbot-theme", darkMode ? "dark" : "light");
+  }, [darkMode]);
+
+  const showPrompts = messages.length === 1 && !showWelcome;
 
   const gameTabs: { id: GameTab; label: string }[] = [
     { id: "trivia", label: "Trivia" },
@@ -32,8 +44,13 @@ function ChatContent() {
     { id: "personality", label: "Quiz" },
   ];
 
+  // Welcome screen
+  if (showWelcome) {
+    return <WelcomeScreen language={language} onStart={startChat} />;
+  }
+
   return (
-    <div className="flex flex-col h-screen bg-[#0a0a1a] text-white relative">
+    <div className="flex flex-col h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] relative">
       <SeasonalDecorations />
       <Navbar
         language={language}
@@ -55,7 +72,7 @@ function ChatContent() {
       </div>
 
       {activeGame && (
-        <div className="relative z-10 border-t border-white/10 bg-[#0a0a1a]">
+        <div className="relative z-10 border-t border-[var(--border-color)] bg-[var(--bg-primary)]">
           <div className="max-w-4xl mx-auto px-4 py-3">
             <div className="flex items-center justify-between mb-3">
               <div className="flex gap-2">
@@ -64,7 +81,7 @@ function ChatContent() {
                     key={tab.id}
                     onClick={() => setActiveGame(tab.id)}
                     className={`px-3 py-1 rounded-full text-xs transition ${
-                      activeGame === tab.id ? "bg-[#cf107a]/20 text-[#cf107a]" : "glass text-white/60 hover:text-white"
+                      activeGame === tab.id ? "bg-[var(--color-maw-magenta)]/20 text-[var(--color-maw-magenta)]" : "glass text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                     }`}
                   >
                     {tab.label}
@@ -73,12 +90,12 @@ function ChatContent() {
               </div>
               <button
                 onClick={() => setActiveGame(null)}
-                className="p-1 rounded-lg hover:bg-white/10 transition text-white/40 hover:text-white"
+                className="p-1 rounded-lg hover:bg-[var(--border-color)] transition text-[var(--text-muted)] hover:text-[var(--text-primary)]"
               >
                 <X size={16} />
               </button>
             </div>
-            <div className="glass rounded-xl p-4 border border-white/10">
+            <div className="glass rounded-xl p-4 border border-[var(--border-color)]">
               {activeGame === "trivia" && <TriviaQuiz />}
               {activeGame === "word" && <WordGame />}
               {activeGame === "riddle" && <RiddleCard />}
@@ -113,7 +130,7 @@ function ChatContent() {
             <button
               onClick={() => setActiveGame(activeGame ? null : "trivia")}
               className={`p-2 rounded-full transition ${
-                activeGame ? "bg-[#cf107a]/20 text-[#cf107a]" : "glass hover:bg-white/10 text-white/60"
+                activeGame ? "bg-[var(--color-maw-magenta)]/20 text-[var(--color-maw-magenta)]" : "glass hover:bg-[var(--border-color)] text-[var(--text-secondary)]"
               }`}
               title="Games"
             >

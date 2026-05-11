@@ -23,21 +23,36 @@ export function Navbar({ language, onLanguageChange, darkMode, onDarkModeChange,
 
   return (
     <>
-      <header className="glass border-b border-white/10 px-4 py-3 flex items-center justify-between shrink-0 z-20">
+      <header className="glass border-b border-[var(--border-color)] px-4 py-3 flex items-center justify-between shrink-0 z-20">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full gradient-glow flex items-center justify-center text-xs font-bold text-white shadow-lg shadow-[#cf107a]/20">
-            M
-          </div>
-          <div>
-            <h1 className="font-heading font-semibold text-sm">
-              MAWbot <span className="text-xs text-[#cf107a]">✦</span>
-            </h1>
-            {seasonal && (
-              <p className="text-[10px] text-white/40 flex items-center gap-1">
-                <span>{seasonal.emoji}</span> {seasonal.name}
-              </p>
-            )}
-          </div>
+          <a href="/" className="flex items-center gap-3 group">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[var(--color-maw-blue)] via-[var(--color-maw-indigo)] to-[var(--color-maw-magenta)] p-[2px] shadow-lg shadow-[var(--color-maw-indigo)]/20 group-hover:shadow-[var(--color-maw-indigo)]/40 transition-shadow">
+              <div className="w-full h-full rounded-xl bg-[var(--bg-primary)] flex items-center justify-center">
+                <img
+                  src="/logo.png"
+                  alt="MAW"
+                  className="w-6 h-6 object-contain"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).style.display = "none";
+                    const parent = (e.currentTarget as HTMLImageElement).parentElement;
+                    if (parent) {
+                      parent.innerHTML = '<span class="text-sm font-bold text-gradient">M</span>';
+                    }
+                  }}
+                />
+              </div>
+            </div>
+            <div>
+              <h1 className="font-heading font-semibold text-sm text-[var(--text-primary)]">
+                MAWbot <span className="text-xs text-[var(--color-maw-magenta)]">✦</span>
+              </h1>
+              {seasonal && (
+                <p className="text-[10px] text-[var(--text-muted)] flex items-center gap-1">
+                  <span>{seasonal.emoji}</span> {seasonal.name}
+                </p>
+              )}
+            </div>
+          </a>
         </div>
 
         <div className="flex items-center gap-2">
@@ -46,7 +61,7 @@ export function Navbar({ language, onLanguageChange, darkMode, onDarkModeChange,
           {/* Language toggle */}
           <button
             onClick={() => onLanguageChange(language === "en" ? "np" : "en")}
-            className="px-3 py-1 rounded-full text-[11px] font-medium glass hover:bg-white/10 transition"
+            className="px-3 py-1 rounded-full text-[11px] font-medium glass hover:bg-[var(--border-color)] transition text-[var(--text-secondary)]"
           >
             {language === "en" ? "नेपाली" : "English"}
           </button>
@@ -54,7 +69,7 @@ export function Navbar({ language, onLanguageChange, darkMode, onDarkModeChange,
           {/* Theme toggle */}
           <button
             onClick={onDarkModeChange}
-            className="p-2 rounded-full glass hover:bg-white/10 transition"
+            className="p-2 rounded-full glass hover:bg-[var(--border-color)] transition text-[var(--text-secondary)]"
             title="Toggle theme"
           >
             {darkMode ? <Sun size={15} /> : <Moon size={15} />}
@@ -66,29 +81,29 @@ export function Navbar({ language, onLanguageChange, darkMode, onDarkModeChange,
               {isAdmin && (
                 <a
                   href="/admin"
-                  className="text-[11px] px-2 py-1 rounded-full bg-[#cf107a]/20 text-[#cf107a] hover:bg-[#cf107a]/30 transition"
+                  className="text-[11px] px-2 py-1 rounded-full bg-[var(--color-maw-magenta)]/20 text-[var(--color-maw-magenta)] hover:bg-[var(--color-maw-magenta)]/30 transition"
                 >
                   Admin
                 </a>
               )}
               <button
                 onClick={logout}
-                className="p-2 rounded-full glass hover:bg-white/10 transition text-white/60"
+                className="p-2 rounded-full glass hover:bg-[var(--border-color)] transition text-[var(--text-muted)]"
                 title="Sign out"
               >
                 <LogOut size={15} />
               </button>
-              <div className="w-7 h-7 rounded-full bg-[#1457ee]/30 flex items-center justify-center text-xs font-medium">
+              <div className="w-7 h-7 rounded-full bg-[var(--color-maw-blue)]/30 flex items-center justify-center text-xs font-medium text-[var(--text-primary)]">
                 {user.email?.charAt(0).toUpperCase() || "U"}
               </div>
             </div>
           ) : (
             <button
               onClick={() => setShowAuth(true)}
-              className="p-2 rounded-full gradient-glow transition"
+              className="p-2 rounded-full gradient-glow transition hover:scale-105 active:scale-95"
               title="Sign in"
             >
-              <LogIn size={15} />
+              <LogIn size={15} className="text-white" />
             </button>
           )}
         </div>
