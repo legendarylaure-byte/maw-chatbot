@@ -28,7 +28,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0a0a1a",
+  themeColor: "#F5F2FF",
   width: "device-width",
   initialScale: 1,
 };
@@ -42,10 +42,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             __html: `
               (function() {
                 try {
-                  var theme = localStorage.getItem('mawbot-theme');
-                  if (!theme) {
-                    theme = window.matchMedia('(prefers-color-scheme:dark)').matches ? 'dark' : 'light';
-                  }
+                  var theme = localStorage.getItem('mawbot-theme') || 'light';
                   if (theme === 'dark') {
                     document.documentElement.classList.add('dark');
                   }

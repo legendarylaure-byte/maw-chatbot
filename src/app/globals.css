@@ -5,6 +5,8 @@
   --color-maw-indigo: #5B5BD6;
   --color-maw-purple: #9227a0;
   --color-maw-magenta: #E91E8C;
+  --color-maw-gold: #F5A623;
+  --color-maw-coral: #FF6B8A;
   --color-maw-white: #ffffff;
 
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
@@ -14,21 +16,24 @@
 }
 
 :root {
-  --bg-primary: #F5F5F7;
-  --bg-secondary: #ffffff;
-  --bg-card: rgba(255, 255, 255, 0.8);
-  --bg-glass: rgba(255, 255, 255, 0.6);
-  --text-primary: #1D1D1F;
-  --text-secondary: #6E6E73;
-  --text-muted: #A1A1A6;
-  --border-color: rgba(0, 0, 0, 0.08);
-  --border-glass: rgba(0, 0, 0, 0.1);
-  --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.06);
-  --shadow-glow: 0 0 20px rgba(91, 91, 214, 0.15);
+  --bg-primary: #F5F2FF;
+  --bg-secondary: #FFFFFF;
+  --bg-card: rgba(255, 255, 255, 0.85);
+  --bg-glass: rgba(255, 255, 255, 0.75);
+  --text-primary: #1A0A2E;
+  --text-secondary: #5A4A7A;
+  --text-muted: #9A8AAA;
+  --border-color: rgba(91, 91, 214, 0.12);
+  --border-glass: rgba(91, 91, 214, 0.08);
+  --shadow-card: 0 2px 16px rgba(91, 91, 214, 0.08);
+  --shadow-glow: 0 0 24px rgba(91, 91, 214, 0.2);
   --gradient-brand: linear-gradient(135deg, #3B6EF8, #5B5BD6, #9227a0, #E91E8C);
   --gradient-accent: linear-gradient(135deg, #3B6EF8, #E91E8C);
   --gradient-user: linear-gradient(135deg, #3B6EF8, #5B5BD6);
-  --scrollbar-thumb: rgba(0, 0, 0, 0.15);
+  --gradient-warm: linear-gradient(135deg, #F5A623, #FF6B8A, #E91E8C);
+  --gradient-orb: linear-gradient(135deg, #3B6EF8, #5B5BD6, #E91E8C);
+  --scrollbar-thumb: rgba(91, 91, 214, 0.2);
+  --mascot-bg: linear-gradient(135deg, #3B6EF8, #5B5BD6, #E91E8C);
 }
 
 .dark {
@@ -46,7 +51,10 @@
   --gradient-brand: linear-gradient(135deg, #1457ee, #513fc7, #9227a0, #cf107a);
   --gradient-accent: linear-gradient(135deg, #1457ee, #cf107a);
   --gradient-user: linear-gradient(135deg, #1457ee, #513fc7);
+  --gradient-warm: linear-gradient(135deg, #F5A623, #FF6B8A, #E91E8C);
+  --gradient-orb: linear-gradient(135deg, #1457ee, #513fc7, #cf107a);
   --scrollbar-thumb: rgba(255, 255, 255, 0.15);
+  --mascot-bg: linear-gradient(135deg, #1457ee, #513fc7, #cf107a);
 }
 
 * {
@@ -87,7 +95,7 @@ body {
 }
 
 .neon-glow {
-  box-shadow: 0 0 20px rgba(207, 16, 122, 0.3), 0 0 60px rgba(146, 39, 160, 0.1);
+  box-shadow: var(--shadow-glow);
 }
 
 .lang-np {
@@ -104,44 +112,81 @@ body {
 .slide-up { animation: slideUp 0.4s ease-out; }
 @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
+/* === Mesh blob animations === */
+@keyframes blob-drift-1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(60px, -40px) scale(1.1); }
+  50% { transform: translate(-30px, 60px) scale(0.9); }
+  75% { transform: translate(40px, -20px) scale(1.05); }
+}
+@keyframes blob-drift-2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(-50px, 30px) scale(1.15); }
+  66% { transform: translate(40px, -50px) scale(0.85); }
+}
+@keyframes blob-drift-3 {
+  0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); }
+  50% { transform: translate(30px, 40px) scale(1.2) rotate(10deg); }
+}
+@keyframes blob-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+@keyframes blob-stretch {
+  0%, 100% { border-radius: 60% 40% 50% 50%; }
+  50% { border-radius: 40% 60% 50% 50%; }
+}
+
+.animate-blob-1 { animation: blob-drift-1 20s ease-in-out infinite, blob-pulse 8s ease-in-out infinite, blob-stretch 12s ease-in-out infinite; }
+.animate-blob-2 { animation: blob-drift-2 18s ease-in-out infinite, blob-pulse 10s ease-in-out infinite, blob-stretch 14s ease-in-out infinite; }
+.animate-blob-3 { animation: blob-drift-3 22s ease-in-out infinite, blob-pulse 6s ease-in-out infinite, blob-stretch 16s ease-in-out infinite; }
+.animate-blob-4 { animation: blob-drift-1 25s ease-in-out infinite, blob-pulse 9s ease-in-out infinite, blob-stretch 18s ease-in-out infinite reverse; }
+.animate-blob-5 { animation: blob-drift-2 16s ease-in-out infinite, blob-pulse 7s ease-in-out infinite, blob-stretch 10s ease-in-out infinite; }
+
+/* === Floating === */
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
   50% { transform: translateY(-20px); }
 }
+.animate-float { animation: float 6s ease-in-out infinite; }
 
+/* === Glow pulse === */
 @keyframes glow-pulse {
-  0%, 100% { opacity: 0.5; }
+  0%, 100% { opacity: 0.4; }
   50% { opacity: 1; }
 }
+.animate-glow-pulse { animation: glow-pulse 3s ease-in-out infinite; }
 
+/* === Bounce dots (typing indicator) === */
 @keyframes bounce-dot {
-  0%, 80%, 100% { transform: scale(0); }
-  40% { transform: scale(1); }
+  0%, 80%, 100% { transform: scale(0); opacity: 0.3; }
+  40% { transform: scale(1); opacity: 1; }
 }
+.animate-bounce-dot { animation: bounce-dot 1.4s ease-in-out infinite; }
 
+/* === Gradient background shift === */
 @keyframes gradient-bg {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
 }
+.animate-gradient-bg { animation: gradient-bg 15s ease infinite; background-size: 400% 400%; }
 
+/* === 3D Logo float === */
 @keyframes logo-float {
   0%, 100% { transform: translateY(0px) rotateX(0deg); }
   50% { transform: translateY(-15px) rotateX(5deg); }
 }
+.animate-logo-float { animation: logo-float 6s ease-in-out infinite; transform-style: preserve-3d; }
 
+/* === Brand scrolling === */
 @keyframes brand-scroll {
   0% { transform: translateX(0); }
   100% { transform: translateX(-50%); }
 }
+.animate-brand-scroll { animation: brand-scroll 40s linear infinite; }
 
-.animate-float { animation: float 6s ease-in-out infinite; }
-.animate-glow-pulse { animation: glow-pulse 3s ease-in-out infinite; }
-.animate-bounce-dot { animation: bounce-dot 1.4s ease-in-out infinite; }
-.animate-gradient-bg { animation: gradient-bg 15s ease infinite; background-size: 400% 400%; }
-.animate-logo-float { animation: logo-float 6s ease-in-out infinite; transform-style: preserve-3d; }
-.animate-brand-scroll { animation: brand-scroll 30s linear infinite; }
-
+/* === Card hover === */
 .card-hover {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
@@ -149,3 +194,78 @@ body {
   transform: translateY(-2px);
   box-shadow: var(--shadow-card);
 }
+
+/* === Liquid ripple === */
+@keyframes ripple {
+  to { transform: scale(4); opacity: 0; }
+}
+.ripple-effect {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(0);
+  animation: ripple 0.6s ease-out;
+  pointer-events: none;
+}
+
+/* === Typing cursor === */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+.typing-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  background: var(--color-maw-magenta);
+  margin-left: 2px;
+  animation: blink 0.8s step-end infinite;
+  vertical-align: text-bottom;
+}
+
+/* === Shimmer sweep === */
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+.shimmer-sweep {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transform: translateX(-100%);
+}
+.shimmer-sweep:hover {
+  animation: shimmer 0.8s ease-in-out;
+}
+
+/* === Orb mascot animations === */
+@keyframes orb-blink {
+  0%, 45%, 55%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(0.1); }
+}
+.orb-blink { animation: orb-blink 3s ease-in-out infinite; }
+
+@keyframes orb-wave {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-15deg); }
+  75% { transform: rotate(15deg); }
+}
+.orb-wave { animation: orb-wave 0.6s ease-in-out 0.5s 1; }
+
+/* === Confetti sparkle === */
+@keyframes sparkle {
+  0%, 100% { opacity: 0; transform: scale(0) rotate(0deg); }
+  50% { opacity: 1; transform: scale(1) rotate(180deg); }
+}
+.animate-sparkle { animation: sparkle 2s ease-in-out infinite; }
+
+/* === Stagger children === */
+.stagger-children > * {
+  opacity: 0;
+  animation: fadeIn 0.4s ease-out forwards;
+}
+.stagger-children > *:nth-child(1) { animation-delay: 0.05s; }
+.stagger-children > *:nth-child(2) { animation-delay: 0.1s; }
+.stagger-children > *:nth-child(3) { animation-delay: 0.15s; }
+.stagger-children > *:nth-child(4) { animation-delay: 0.2s; }
+.stagger-children > *:nth-child(5) { animation-delay: 0.25s; }

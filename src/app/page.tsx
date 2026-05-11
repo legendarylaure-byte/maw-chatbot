@@ -14,13 +14,20 @@ import { RiddleCard } from "@/components/games/RiddleCard";
 import { PersonalityQuiz } from "@/components/games/PersonalityQuiz";
 import { AuthProvider } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { Gamepad2, X } from "lucide-react";
 
 type GameTab = "trivia" | "word" | "riddle" | "personality" | null;
 
 function ChatContent() {
   const { showWelcome, startChat, messages, input, setInput, isLoading, language, setLanguage, sendMessage, messagesEndRef } = useChat();
-  const [darkMode, setDarkMode] = useState(true);
+  const [darkMode, setDarkMode] = useState(() => {
+    try {
+      const stored = localStorage.getItem("mawbot-theme");
+      if (stored) return stored === "dark";
+      return false;
+    } catch { return false; }
+  });
   const [selectedVoice, setSelectedVoice] = useState("");
   const [activeGame, setActiveGame] = useState<GameTab>(null);
 
@@ -44,13 +51,33 @@ function ChatContent() {
     { id: "personality", label: "Quiz" },
   ];
 
-  // Welcome screen
-  if (showWelcome) {
-    return <WelcomeScreen language={language} onStart={startChat} />;
-  }
-
   return (
-    <div className="flex flex-col h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] relative">
+    <AnimatePresence mode="wait">
+      {showWelcome ? (
+        <motion.div
+          key="welcome"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95, filter: "blur(4px)" }}
+          transition={{ duration: 0.4, ease: "easeInOut" }}
+          className="bg-[var(--bg-primary)]"
+        >
+          <WelcomeScreen
+            language={language}
+            onStart={startChat}
+            darkMode={darkMode}
+            onDarkModeChange={() => setDarkMode(!darkMode)}
+          />
+        </motion.div>
+      ) : (
+        <motion.div
+          key="chat"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -30 }}
+          transition={{ duration: 0.4, ease: "easeInOut" }}
+          className="flex flex-col h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] relative"
+        >
       <SeasonalDecorations />
       <Navbar
         language={language}
@@ -139,7 +166,9 @@ function ChatContent() {
           }
         />
       </div>
-    </div>
+          </motion.div>
+        )}
+    </AnimatePresence>
   );
 }
 

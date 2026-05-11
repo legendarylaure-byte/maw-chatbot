@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useVoice } from "@/hooks/useVoice";
 import { FeedbackButtons } from "./FeedbackButtons";
@@ -27,6 +28,27 @@ export function ChatBubble({ message, language, voiceId, messageIndex }: ChatBub
   const isUser = message.role === "user";
   const { playAudio } = useVoice();
   const { text, sources } = extractSources(message.content);
+  const [displayedText, setDisplayedText] = useState(isUser ? text : "");
+  const [showCursor, setShowCursor] = useState(!isUser);
+
+  // Typewriter effect for bot messages
+  useEffect(() => {
+    if (isUser) return;
+    let i = 0;
+    const speed = 15;
+    setDisplayedText("");
+
+    const timer = setInterval(() => {
+      i++;
+      setDisplayedText(text.slice(0, i));
+      if (i >= text.length) {
+        clearInterval(timer);
+        setTimeout(() => setShowCursor(false), 600);
+      }
+    }, speed);
+
+    return () => clearInterval(timer);
+  }, [text, isUser]);
 
   const handlePlay = () => {
     if (voiceId) {
@@ -76,7 +98,9 @@ export function ChatBubble({ message, language, voiceId, messageIndex }: ChatBub
               </div>
               <div
                 className={`text-sm leading-relaxed ${language === "np" ? "lang-np" : ""} text-[var(--text-primary)]`}
-                dangerouslySetInnerHTML={{ __html: renderContent(text) }}
+                dangerouslySetInnerHTML={{
+                  __html: renderContent(displayedText) + (showCursor ? '<span class="typing-cursor"></span>' : ""),
+                }}
               />
               {/* Source badges */}
               {sources.length > 0 && (

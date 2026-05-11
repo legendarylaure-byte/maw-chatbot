@@ -1,8 +1,10 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useEffect, useCallback, useState } from "react";
 import { motion, useInView } from "framer-motion";
+import confetti from "canvas-confetti";
 import { Sparkles, MessageCircle, ChevronRight, Building2, Globe2, MapPin, ExternalLink } from "lucide-react";
+import { ThemeToggle } from "./ThemeToggle";
 
 const brands = [
   { name: "DEEPAL", logo: "/brand-logos/deepal.png" },
@@ -35,8 +37,25 @@ interface StatCounterProps {
 function StatCounter({ target, suffix = "", prefix = "", label }: StatCounterProps) {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-50px" });
+  const [count, setCount] = useState(0);
 
-  const displayValue = isInView ? target : 0;
+  useEffect(() => {
+    if (!isInView) return;
+    const duration = 1500;
+    const steps = 30;
+    const increment = target / steps;
+    let current = 0;
+    const timer = setInterval(() => {
+      current += increment;
+      if (current >= target) {
+        setCount(target);
+        clearInterval(timer);
+      } else {
+        setCount(Math.floor(current));
+      }
+    }, duration / steps);
+    return () => clearInterval(timer);
+  }, [isInView, target]);
 
   return (
     <div ref={ref} className="text-center">
@@ -47,9 +66,7 @@ function StatCounter({ target, suffix = "", prefix = "", label }: StatCounterPro
         className="text-3xl md:text-4xl font-bold font-heading"
       >
         <span className="text-gradient">
-          {prefix}
-          {displayValue.toLocaleString()}
-          {suffix}
+          {prefix}{count.toLocaleString()}{suffix}
         </span>
       </motion.div>
       <motion.p
@@ -67,32 +84,134 @@ function StatCounter({ target, suffix = "", prefix = "", label }: StatCounterPro
 interface WelcomeScreenProps {
   language: "en" | "np";
   onStart: (message?: string) => void;
+  darkMode: boolean;
+  onDarkModeChange: () => void;
 }
 
-export function WelcomeScreen({ language, onStart }: WelcomeScreenProps) {
+export function WelcomeScreen({ language, onStart, darkMode, onDarkModeChange }: WelcomeScreenProps) {
   const aboutRef = useRef<HTMLDivElement>(null);
   const aboutInView = useInView(aboutRef, { once: true, margin: "-80px" });
+  const logoRef = useRef<HTMLDivElement>(null);
+  const heroRef = useRef<HTMLDivElement>(null);
+  const [tilt, setTilt] = useState({ x: 0, y: 0 });
+  const confettiFired = useRef(false);
+
+  // Confetti on first visit
+  useEffect(() => {
+    if (confettiFired.current) return;
+    const fired = sessionStorage.getItem("mawbot-confetti");
+    if (fired) return;
+    confettiFired.current = true;
+    sessionStorage.setItem("mawbot-confetti", "true");
+
+    const defaults = {
+      spread: 60,
+      ticks: 100,
+      gravity: 0.6,
+      decay: 0.94,
+      startVelocity: 30,
+      colors: ["#3B6EF8", "#5B5BD6", "#E91E8C", "#F5A623", "#FF6B8A"],
+    };
+
+    const shoot = () => {
+      confetti({ ...defaults, particleCount: 40, origin: { x: 0.3, y: 0.6 } });
+      confetti({ ...defaults, particleCount: 40, origin: { x: 0.7, y: 0.6 } });
+    };
+
+    const timer = setTimeout(shoot, 800);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const handleLogoMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!logoRef.current) return;
+    const rect = logoRef.current.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    setTilt({ x: -y * 20, y: x * 20 });
+  }, []);
+
+  const handleLogoMouseLeave = useCallback(() => {
+    setTilt({ x: 0, y: 0 });
+  }, []);
+
+  const handleBrandClick = useCallback((brandName: string) => {
+    const msg = language === "np"
+      ? `${brandName} बारे बताउनुहोस्`
+      : `Tell me about ${brandName}`;
+    onStart(msg);
+  }, [language, onStart]);
+
+  const handleRipple = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    const btn = e.currentTarget;
+    const circle = document.createElement("span");
+    const rect = btn.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height);
+    circle.style.width = circle.style.height = `${size}px`;
+    circle.style.left = `${e.clientX - rect.left - size / 2}px`;
+    circle.style.top = `${e.clientY - rect.top - size / 2}px`;
+    circle.classList.add("ripple-effect");
+    btn.appendChild(circle);
+    setTimeout(() => circle.remove(), 600);
+  }, []);
 
   return (
     <div className="relative flex flex-col items-center min-h-screen overflow-y-auto bg-[var(--bg-primary)]">
-      {/* Animated gradient background */}
-      <div className="fixed inset-0 bg-gradient-to-br from-[#3B6EF8]/8 via-[#5B5BD6]/4 to-[#E91E8C]/8 dark:from-[#1457ee]/15 dark:via-[#513fc7]/8 dark:to-[#cf107a]/15 animate-gradient-bg pointer-events-none" />
+      {/* Theme toggle */}
+      <ThemeToggle darkMode={darkMode} onToggle={onDarkModeChange} variant="floating" />
 
-      {/* Floating orbs */}
-      <div className="fixed top-1/4 left-1/4 w-72 h-72 rounded-full bg-[#3B6EF8]/8 blur-3xl animate-glow-pulse pointer-events-none" />
-      <div className="fixed bottom-1/4 right-1/4 w-80 h-80 rounded-full bg-[#E91E8C]/8 blur-3xl animate-glow-pulse pointer-events-none" style={{ animationDelay: "1.5s" }} />
-      <div className="fixed top-1/3 right-1/3 w-48 h-48 rounded-full bg-[#5B5BD6]/8 blur-3xl animate-glow-pulse pointer-events-none" style={{ animationDelay: "3s" }} />
+      {/* Fluid mesh background — 5 animated blobs */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-[#3B6EF8]/10 dark:bg-[#3B6EF8]/15 animate-blob-1" />
+        <div className="absolute -bottom-32 -right-32 w-80 h-80 rounded-full bg-[#E91E8C]/10 dark:bg-[#E91E8C]/15 animate-blob-2" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full bg-[#F5A623]/8 dark:bg-[#F5A623]/10 animate-blob-3" />
+        <div className="absolute top-1/4 right-1/4 w-72 h-72 rounded-full bg-[#5B5BD6]/10 dark:bg-[#5B5BD6]/15 animate-blob-4" />
+        <div className="absolute bottom-1/3 left-1/3 w-56 h-56 rounded-full bg-[#FF6B8A]/8 dark:bg-[#FF6B8A]/10 animate-blob-5" />
+      </div>
+
+      {/* Glowing orb mascot */}
+      <div className="fixed bottom-6 right-6 z-50">
+        <motion.div
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.8, delay: 1.5, ease: "easeOut" }}
+          className="relative group cursor-default"
+        >
+          <div className="w-14 h-14 rounded-full bg-[var(--gradient-orb)] animate-float shadow-xl shadow-[var(--color-maw-indigo)]/30 flex items-center justify-center orb-wave">
+            <div className="flex gap-1.5">
+              <div className="w-2 h-2 bg-white rounded-full orb-blink" />
+              <div className="w-2 h-2 bg-white rounded-full orb-blink" style={{ animationDelay: "0.1s" }} />
+            </div>
+          </div>
+          <div className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-[var(--bg-card)] text-[var(--text-primary)] text-[10px] font-medium px-2 py-1 rounded-lg shadow-lg whitespace-nowrap border border-[var(--border-color)]">
+            👋 Hey there!
+          </div>
+        </motion.div>
+      </div>
 
       {/* Hero Section */}
-      <div className="relative z-10 flex flex-col items-center px-6 pt-20 pb-8 text-center w-full max-w-4xl">
-        {/* Floating logo */}
+      <div ref={heroRef} className="relative z-10 flex flex-col items-center px-6 pt-20 pb-8 text-center w-full max-w-4xl">
+        {/* 3D Floating logo with tilt */}
         <motion.div
           initial={{ scale: 0, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
           className="mb-6"
+          ref={logoRef}
+          onMouseMove={handleLogoMouseMove}
+          onMouseLeave={handleLogoMouseLeave}
+          style={{
+            perspective: "600px",
+          }}
         >
-          <div className="w-28 h-28 rounded-2xl bg-gradient-to-br from-[#3B6EF8] via-[#5B5BD6] to-[#E91E8C] p-[3px] shadow-2xl shadow-[#5B5BD6]/30 animate-logo-float">
+          <motion.div
+            className="w-28 h-28 rounded-2xl bg-gradient-to-br from-[#3B6EF8] via-[#5B5BD6] to-[#E91E8C] p-[3px] shadow-2xl shadow-[#5B5BD6]/30"
+            animate={{
+              rotateX: tilt.x,
+              rotateY: tilt.y,
+            }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            style={{ transformStyle: "preserve-3d" }}
+          >
             <div className="w-full h-full rounded-2xl bg-[var(--bg-primary)] flex items-center justify-center">
               <img
                 src="/brand-logos/maw-light.svg"
@@ -105,7 +224,7 @@ export function WelcomeScreen({ language, onStart }: WelcomeScreenProps) {
                 className="w-20 h-20 object-contain block dark:hidden"
               />
             </div>
-          </div>
+          </motion.div>
         </motion.div>
 
         {/* Title */}
@@ -143,7 +262,7 @@ export function WelcomeScreen({ language, onStart }: WelcomeScreenProps) {
           }
         </motion.p>
 
-        {/* CTA Buttons */}
+        {/* CTA Buttons with liquid ripple */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -151,10 +270,11 @@ export function WelcomeScreen({ language, onStart }: WelcomeScreenProps) {
           className="flex flex-col sm:flex-row gap-4 mb-12"
         >
           <button
-            onClick={() => onStart()}
+            onClick={(e) => { handleRipple(e); onStart(); }}
             className="group relative px-8 py-3.5 rounded-xl font-semibold text-white text-sm overflow-hidden transition-all duration-300 hover:scale-105 active:scale-95"
           >
             <div className="absolute inset-0 bg-gradient-to-r from-[#3B6EF8] via-[#5B5BD6] to-[#E91E8C] animate-gradient-bg" style={{ backgroundSize: "200% 100%" }} />
+            <div className="absolute inset-0 shimmer-sweep" />
             <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition bg-white/10" />
             <span className="relative flex items-center gap-2">
               <MessageCircle size={18} />
@@ -164,12 +284,15 @@ export function WelcomeScreen({ language, onStart }: WelcomeScreenProps) {
           </button>
 
           <button
-            onClick={() => onStart(
-              language === "np"
-                ? "MAW Group को बारेमा बताउनुहोस्"
-                : "Tell me about MAW Group"
-            )}
-            className="px-8 py-3.5 rounded-xl font-medium text-sm border border-[var(--border-color)] hover:border-[var(--text-secondary)] transition-all duration-300 bg-[var(--bg-glass)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:scale-105 active:scale-95"
+            onClick={(e) => {
+              handleRipple(e);
+              onStart(
+                language === "np"
+                  ? "MAW Group को बारेमा बताउनुहोस्"
+                  : "Tell me about MAW Group"
+              );
+            }}
+            className="relative px-8 py-3.5 rounded-xl font-medium text-sm border border-[var(--border-color)] hover:border-[var(--color-maw-indigo)] transition-all duration-300 bg-[var(--bg-glass)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:scale-105 active:scale-95 overflow-hidden"
           >
             <span className="flex items-center gap-2">
               <Sparkles size={16} />
@@ -181,12 +304,12 @@ export function WelcomeScreen({ language, onStart }: WelcomeScreenProps) {
 
       {/* Stats Counter Section */}
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 1.0 }}
         className="relative z-10 w-full max-w-3xl mx-auto px-6 mb-12"
       >
-        <div className="glass rounded-2xl p-6 md:p-8 border border-[var(--border-color)]">
+        <div className="glass rounded-2xl p-6 md:p-8 border border-[var(--border-color)] card-hover">
           <div className="grid grid-cols-3 gap-4 md:gap-8">
             {stats.map((stat) => (
               <StatCounter
@@ -201,7 +324,7 @@ export function WelcomeScreen({ language, onStart }: WelcomeScreenProps) {
         </div>
       </motion.div>
 
-      {/* Brand Showcase Strip */}
+      {/* Brand Showcase Strip — Interactive, bigger logos */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -209,27 +332,36 @@ export function WelcomeScreen({ language, onStart }: WelcomeScreenProps) {
         className="relative z-10 w-full max-w-5xl mx-auto px-6 mb-10"
       >
         <p className="text-[10px] uppercase tracking-widest text-[var(--text-muted)] mb-4 text-center font-medium">
-          {language === "np" ? "हाम्रा ब्रान्डहरू" : "Our Brands"}
+          {language === "np" ? "ब्रान्डमा क्लिक गर्नुहोस्" : "Click a brand to learn more"}
         </p>
         <div className="overflow-hidden relative">
           <div className="flex gap-4 animate-brand-scroll">
             {[...brands, ...brands].map((brand, i) => (
-              <div
+              <button
                 key={`${brand.name}-${i}`}
-                className="shrink-0 flex items-center gap-2.5 px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-glass)] card-hover"
+                onClick={() => handleBrandClick(brand.name)}
+                className="shrink-0 flex items-center gap-3 px-5 py-3 rounded-xl border border-[var(--border-color)] bg-[var(--bg-glass)] card-hover cursor-pointer transition-all duration-300 hover:border-[var(--color-maw-indigo)]/50 hover:shadow-lg hover:shadow-[var(--color-maw-indigo)]/10"
               >
-                <div className="w-6 h-6 rounded-full bg-white dark:bg-white/10 flex items-center justify-center p-0.5 shrink-0">
+                <div className="w-10 h-10 rounded-full bg-white dark:bg-white/10 flex items-center justify-center p-1 shrink-0">
                   <img
                     src={brand.logo}
                     alt={brand.name}
                     className="w-full h-full object-contain"
                     loading="lazy"
+                    onError={(e) => {
+                      const el = e.currentTarget;
+                      el.style.display = "none";
+                      const parent = el.parentElement;
+                      if (parent) {
+                        parent.innerHTML = `<span class="text-sm font-bold text-[var(--color-maw-indigo)]">${brand.name.charAt(0)}</span>`;
+                      }
+                    }}
                   />
                 </div>
-                <span className="text-xs font-semibold tracking-wider text-[var(--text-secondary)]">
+                <span className="text-sm font-semibold tracking-wider text-[var(--text-secondary)]">
                   {brand.name}
                 </span>
-              </div>
+              </button>
             ))}
           </div>
         </div>
@@ -243,7 +375,7 @@ export function WelcomeScreen({ language, onStart }: WelcomeScreenProps) {
         transition={{ duration: 0.7, ease: "easeOut" }}
         className="relative z-10 w-full max-w-3xl mx-auto px-6 mb-16"
       >
-        <div className="flex">
+        <div className="flex card-hover">
           <div className="w-[4px] rounded-l-xl bg-gradient-to-b from-[#3B6EF8] to-[#E91E8C] shrink-0" />
           <div className="flex-1 glass rounded-r-xl rounded-bl-xl p-6 md:p-8 border border-[var(--border-color)] border-l-0">
             <div className="flex items-center gap-2 mb-3">

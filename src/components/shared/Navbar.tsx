@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Sun, Moon, LogIn, User, LogOut } from "lucide-react";
+import { LogIn, LogOut } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useSeasonal } from "@/hooks/useSeasonal";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { VoiceSelector } from "@/components/chat/VoiceSelector";
+import { ThemeToggle } from "./ThemeToggle";
 
 interface NavbarProps {
   language: "en" | "np";
@@ -66,14 +67,7 @@ export function Navbar({ language, onLanguageChange, darkMode, onDarkModeChange,
             {language === "en" ? "नेपाली" : "English"}
           </button>
 
-          {/* Theme toggle */}
-          <button
-            onClick={onDarkModeChange}
-            className="p-2 rounded-full glass hover:bg-[var(--border-color)] transition text-[var(--text-secondary)]"
-            title="Toggle theme"
-          >
-            {darkMode ? <Sun size={15} /> : <Moon size={15} />}
-          </button>
+          <ThemeToggle darkMode={darkMode} onToggle={onDarkModeChange} variant="navbar" />
 
           {/* Auth */}
           {user ? (

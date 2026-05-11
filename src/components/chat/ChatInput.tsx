@@ -80,7 +80,20 @@ export function ChatInput({ input, setInput, isLoading, language, onSend, onMicR
           <button
             type="submit"
             disabled={!input.trim() || isLoading}
-            className="p-2 rounded-full gradient-glow disabled:opacity-30 transition shrink-0 hover:scale-105 active:scale-95 disabled:hover:scale-100"
+            onClick={(e) => {
+              if (!input.trim() || isLoading) return;
+              const btn = e.currentTarget;
+              const circle = document.createElement("span");
+              const rect = btn.getBoundingClientRect();
+              const size = Math.max(rect.width, rect.height);
+              circle.style.width = circle.style.height = `${size}px`;
+              circle.style.left = `${e.clientX - rect.left - size / 2}px`;
+              circle.style.top = `${e.clientY - rect.top - size / 2}px`;
+              circle.classList.add("ripple-effect");
+              btn.appendChild(circle);
+              setTimeout(() => circle.remove(), 600);
+            }}
+            className="relative p-2 rounded-full gradient-glow disabled:opacity-30 transition shrink-0 hover:scale-105 active:scale-95 disabled:hover:scale-100 overflow-hidden"
           >
             {isLoading ? (
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
