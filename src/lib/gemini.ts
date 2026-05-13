@@ -52,6 +52,15 @@ export interface ChatMessage {
   content: string;
 }
 
+export function isErrorMessage(text: string): boolean {
+  const errorPatterns = [
+    /api.key/i, /quota/i, /rate.limit/i, /not.found/i, /unavailable/i,
+    /resting/i, /shut.down/i, /denied/i, /forbidden/i, /blocked/i,
+    /overloaded/i, /capacity/i, /maintenance/i, /cannot/i,
+  ];
+  return errorPatterns.some((p) => p.test(text)) && text.length < 120;
+}
+
 export async function generateChatResponse(
   messages: ChatMessage[],
   contextKnowledge?: string
@@ -76,7 +85,14 @@ export async function generateChatResponse(
     `${lastMessage.content}${knowledgeContext}\n\nRemember: Be positive, humble, and professional!`
   );
 
-  return result.response.text();
+  const text = result.response.text();
+
+  if (isErrorMessage(text)) {
+    console.error("Gemini returned an error-like response:", text);
+    throw new Error("Gemini API returned an unexpected response");
+  }
+
+  return text;
 }
 
 export async function generateChatResponseStream(

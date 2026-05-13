@@ -80,24 +80,24 @@ export default function AdminDashboard() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           <a
             href="/admin/memory"
-            className="flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-all text-sm group"
+            className="group flex items-center justify-between p-3 rounded-lg bg-gradient-to-br from-maw-blue/25 to-maw-indigo/15 border border-maw-blue/10 hover:from-maw-blue/30 hover:to-maw-indigo/20 hover:scale-[1.02] transition-all duration-300"
           >
-            <span>✏️ Add new knowledge</span>
-            <ArrowRight size={14} className="text-white/20 group-hover:text-maw-magenta transition-colors" />
+            <span className="text-sm font-medium text-white">✏️ Add new knowledge</span>
+            <ArrowRight size={14} className="text-white/30 group-hover:text-white group-hover:translate-x-0.5 transition-all duration-300" />
           </a>
           <a
             href="/admin/jokes"
-            className="flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-all text-sm group"
+            className="group flex items-center justify-between p-3 rounded-lg bg-gradient-to-br from-maw-magenta/25 to-maw-purple/15 border border-maw-magenta/10 hover:from-maw-magenta/30 hover:to-maw-purple/20 hover:scale-[1.02] transition-all duration-300"
           >
-            <span>😂 Manage jokes</span>
-            <ArrowRight size={14} className="text-white/20 group-hover:text-maw-magenta transition-colors" />
+            <span className="text-sm font-medium text-white">😂 Manage jokes</span>
+            <ArrowRight size={14} className="text-white/30 group-hover:text-white group-hover:translate-x-0.5 transition-all duration-300" />
           </a>
           <a
             href="/admin/settings"
-            className="flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-all text-sm group"
+            className="group flex items-center justify-between p-3 rounded-lg bg-gradient-to-br from-maw-gold/25 to-maw-coral/15 border border-maw-gold/10 hover:from-maw-gold/30 hover:to-maw-coral/20 hover:scale-[1.02] transition-all duration-300"
           >
-            <span>⚙️ Bot settings</span>
-            <ArrowRight size={14} className="text-white/20 group-hover:text-maw-magenta transition-colors" />
+            <span className="text-sm font-medium text-white">⚙️ Bot settings</span>
+            <ArrowRight size={14} className="text-white/30 group-hover:text-white group-hover:translate-x-0.5 transition-all duration-300" />
           </a>
         </div>
       </AdminCard>

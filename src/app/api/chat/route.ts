@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { generateChatResponse, generateChatResponseStream } from "@/lib/gemini";
+import { generateChatResponse, generateChatResponseStream, isErrorMessage } from "@/lib/gemini";
 import { checkRateLimit, getRateLimitKey } from "@/lib/rate-limiter";
 import { validateMessageBody } from "@/lib/sanitizer";
 import { RATE_LIMITS } from "@/lib/constants";
@@ -120,6 +120,14 @@ export async function POST(request: NextRequest) {
             }
             const fullResponse = chunks.join("");
 
+            // If Gemini returned an error disguised as a response, discard it
+            if (fullResponse && isErrorMessage(fullResponse)) {
+              console.error("⚠️ Gemini returned error-like streaming response:", fullResponse);
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: "Gemini API returned an unexpected response -- check API key and quota" })}\n\n`));
+              controller.close();
+              return;
+            }
+
             // Save conversation for authenticated users
             if (userId) {
               try {
@@ -163,9 +171,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ response });
   } catch (error) {
-    console.error("Chat API error:", error);
+    const errMsg = error instanceof Error ? error.message : String(error);
+    console.error("Chat API error:", errMsg);
     return NextResponse.json(
-      { error: "Something went wrong. Please try again." },
+      { error: errMsg.includes("Gemini") ? errMsg : "Something went wrong. Please try again." },
       { status: 500 }
     );
   }
