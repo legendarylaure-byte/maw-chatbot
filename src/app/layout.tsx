@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import Script from "next/script";
 import { Inter, Poppins } from "next/font/google";
 import "./globals.css";
 
@@ -37,18 +36,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${inter.variable} ${poppins.variable}`} suppressHydrationWarning>
-      <head>
-        <Script id="theme-init" strategy="beforeInteractive">{`
-          (function() {
-            try {
-              var theme = localStorage.getItem('mawbot-theme') || 'light';
-              if (theme === 'dark') {
-                document.documentElement.classList.add('dark');
-              }
-            } catch(e) {}
-          })();
-        `}</Script>
-      </head>
+      <head />
       <body className="antialiased min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)]">
         {children}
       </body>

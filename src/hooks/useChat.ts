@@ -21,16 +21,7 @@ const WELCOME_MESSAGE: Message = {
 const STORAGE_KEY = "mawbot-messages";
 
 export function useChat() {
-  const [showWelcome, setShowWelcome] = useState(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return false;
-      }
-    } catch (e) { console.error("Failed to read welcome state from localStorage:", e); }
-    return true;
-  });
+  const [showWelcome, setShowWelcome] = useState(true);
   const [messages, setMessages] = useState<Message[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
