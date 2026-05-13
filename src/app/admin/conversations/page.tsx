@@ -41,7 +41,7 @@ export default function AdminConversations() {
         const json = await res.json();
         setConversations(json.conversations || []);
       }
-    } catch {}
+    } catch (e) { console.error("Failed to fetch conversations:", e); }
   };
 
   const filtered = conversations.filter((c) =>

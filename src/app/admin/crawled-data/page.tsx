@@ -49,7 +49,7 @@ export default function AdminCrawledData() {
         const data = await res.json();
         setPages(data.items || []);
       }
-    } catch {}
+    } catch (e) { console.error("Failed to fetch crawled pages:", e); }
     setLoading(false);
   };
 
@@ -73,7 +73,7 @@ export default function AdminCrawledData() {
         }),
       });
       setSelected(null);
-    } catch {}
+    } catch (e) { console.error("Failed to promote to memory:", e); }
     setPromoting(false);
   };
 

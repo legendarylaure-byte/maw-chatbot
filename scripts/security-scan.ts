@@ -64,7 +64,7 @@ function scanDirectory(dir: string): { file: string; findings: { line: number; m
         }
       }
     }
-  } catch {}
+  } catch (e) { console.error("Failed to scan directory:", e); }
   return results;
 }
 

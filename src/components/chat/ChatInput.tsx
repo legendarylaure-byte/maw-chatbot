@@ -1,6 +1,6 @@
 "use client";
 
-import { Mic, Send, Sparkles } from "lucide-react";
+import { Mic, Send } from "lucide-react";
 import { useVoice } from "@/hooks/useVoice";
 
 interface ChatInputProps {
@@ -103,9 +103,14 @@ export function ChatInput({ input, setInput, isLoading, language, onSend, onMicR
           </button>
         </div>
       </div>
-      <p className="text-[10px] text-[var(--text-muted)] text-center mt-2">
-        MAWbot may occasionally make mistakes. Verify important information.
-      </p>
+      <div className="flex items-center justify-between mt-2">
+        <p className="text-[10px] text-[var(--text-muted)]">
+          MAWbot may occasionally make mistakes. Verify important information.
+        </p>
+        <span className="text-[10px] tabular-nums text-[var(--text-muted)]">
+          {input.length}/2000
+        </span>
+      </div>
     </form>
   );
 }

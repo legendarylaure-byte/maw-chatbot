@@ -23,6 +23,9 @@ export async function POST(request: NextRequest) {
     const audio = await generateSpeech(body.text, body.voiceId, {
       stability: body.stability,
       similarityBoost: body.similarityBoost,
+      style: body.style,
+      useSpeakerBoost: body.useSpeakerBoost,
+      streaming: body.streaming,
     });
 
     if (!audio) {
@@ -32,10 +35,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return new NextResponse(audio, {
+    if (audio instanceof ReadableStream) {
+      return new NextResponse(audio, {
+        headers: { "Content-Type": "audio/mpeg" },
+      });
+    }
+
+    const arrayBuffer = audio as ArrayBuffer;
+    return new NextResponse(arrayBuffer, {
       headers: {
         "Content-Type": "audio/mpeg",
-        "Content-Length": String(audio.byteLength),
+        "Content-Length": String(arrayBuffer.byteLength),
       },
     });
   } catch (error) {

@@ -41,7 +41,7 @@ export default function AdminJokes() {
       const data = await res.json();
       const filtered = (data.items || []).filter((i: Joke & { category: string }) => i.category === "joke");
       setJokes(filtered);
-    } catch {}
+    } catch (e) { console.error("Failed to load jokes:", e); }
   };
 
   const addJoke = async () => {
@@ -59,7 +59,7 @@ export default function AdminJokes() {
       setEn("");
       setNp("");
       loadJokes(token);
-    } catch {}
+    } catch (e) { console.error("Failed to add joke:", e); }
   };
 
   const deleteJoke = async (id: string) => {
@@ -70,7 +70,7 @@ export default function AdminJokes() {
         body: JSON.stringify({ action: "delete", collection: "memory", id }),
       });
       loadJokes(token);
-    } catch {}
+    } catch (e) { console.error("Failed to delete joke:", e); }
   };
 
   return (

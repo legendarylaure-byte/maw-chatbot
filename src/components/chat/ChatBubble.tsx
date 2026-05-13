@@ -2,14 +2,19 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { useVoice } from "@/hooks/useVoice";
+import { Volume2, StopCircle } from "lucide-react";
 import { FeedbackButtons } from "./FeedbackButtons";
+import { extractCards, RichCards } from "./RichCards";
 
 interface ChatBubbleProps {
   message: { role: "user" | "assistant"; content: string };
   language: string;
   voiceId?: string;
   messageIndex?: number;
+  playAudio: (text: string, voiceId?: string, lang?: string, speed?: number) => Promise<void>;
+  isPlaying: boolean;
+  stopAudio: () => void;
+  playbackSpeed: number;
 }
 
 function extractSources(content: string): { text: string; sources: string[] } {
@@ -24,9 +29,8 @@ function extractSources(content: string): { text: string; sources: string[] } {
   return { text: cleaned.trim(), sources };
 }
 
-export function ChatBubble({ message, language, voiceId, messageIndex }: ChatBubbleProps) {
+export function ChatBubble({ message, language, voiceId, messageIndex, playAudio, isPlaying, stopAudio, playbackSpeed }: ChatBubbleProps) {
   const isUser = message.role === "user";
-  const { playAudio } = useVoice();
   const { text, sources } = extractSources(message.content);
   const [displayedText, setDisplayedText] = useState(isUser ? text : "");
   const [showCursor, setShowCursor] = useState(!isUser);
@@ -50,9 +54,18 @@ export function ChatBubble({ message, language, voiceId, messageIndex }: ChatBub
     return () => clearInterval(timer);
   }, [text, isUser]);
 
+  // Extract cards from the fully displayed text
+  const { cards, text: displayText } = isUser
+    ? { cards: [] as ReturnType<typeof extractCards>["cards"], text }
+    : extractCards(displayedText);
+
   const handlePlay = () => {
-    const lang = language === "np" ? "ne-NP" : "en-US";
-    playAudio(text, voiceId || undefined, lang);
+    if (isPlaying) {
+      stopAudio();
+    } else {
+      const lang = language === "np" ? "ne-NP" : "en-US";
+      playAudio(displayText, voiceId || undefined, lang, playbackSpeed);
+    }
   };
 
   const renderContent = (content: string) => {
@@ -74,9 +87,9 @@ export function ChatBubble({ message, language, voiceId, messageIndex }: ChatBub
       {isUser ? (
         /* User bubble */
         <div className="max-w-[85%] md:max-w-[70%] ml-12">
-          <div className="bg-[var(--gradient-user)] text-white rounded-2xl rounded-br-md px-4 py-3 shadow-lg shadow-[var(--color-maw-indigo)]/20">
+          <div className="bg-[var(--gradient-user)] text-[var(--text-on-user)] rounded-2xl rounded-br-md px-4 py-3 shadow-lg shadow-[var(--color-maw-indigo)]/20 border border-[var(--border-glass)]">
             <div
-              className={`text-sm leading-relaxed ${language === "np" ? "lang-np" : ""} text-white/95`}
+              className={`text-sm leading-relaxed ${language === "np" ? "lang-np" : ""} text-[var(--text-on-user)]`}
               dangerouslySetInnerHTML={{ __html: renderContent(text) }}
             />
           </div>
@@ -98,9 +111,10 @@ export function ChatBubble({ message, language, voiceId, messageIndex }: ChatBub
               <div
                 className={`text-sm leading-relaxed ${language === "np" ? "lang-np" : ""} text-[var(--text-primary)]`}
                 dangerouslySetInnerHTML={{
-                  __html: renderContent(displayedText) + (showCursor ? '<span class="typing-cursor"></span>' : ""),
+                  __html: renderContent(displayText) + (showCursor ? '<span class="typing-cursor"></span>' : ""),
                 }}
               />
+              <RichCards cards={cards} />
               {/* Source badges */}
               {sources.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mt-2">
@@ -124,10 +138,14 @@ export function ChatBubble({ message, language, voiceId, messageIndex }: ChatBub
               <div className="flex items-center gap-2 mt-2">
                 <button
                   onClick={handlePlay}
-                  className="text-[var(--text-muted)] hover:text-[var(--color-maw-magenta)] transition p-0.5 text-xs"
-                  title="Listen"
+                  className={`transition p-1 rounded-lg ${
+                    isPlaying
+                      ? "text-[var(--color-maw-magenta)] bg-[var(--color-maw-magenta)]/10"
+                      : "text-[var(--text-muted)] hover:text-[var(--color-maw-magenta)] hover:bg-[var(--color-maw-magenta)]/5"
+                  }`}
+                  title={isPlaying ? "Stop" : "Listen"}
                 >
-                  🔊
+                  {isPlaying ? <StopCircle size={14} /> : <Volume2 size={14} />}
                 </button>
                 {messageIndex !== undefined && <FeedbackButtons messageId={`msg-${messageIndex}`} />}
               </div>

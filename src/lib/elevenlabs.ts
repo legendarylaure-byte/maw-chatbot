@@ -14,9 +14,25 @@ export async function getVoices() {
 export async function generateSpeech(
   text: string,
   voiceId: string,
-  options?: { stability?: number; similarityBoost?: number }
-): Promise<ArrayBuffer | null> {
+  options?: { stability?: number; similarityBoost?: number; style?: number; useSpeakerBoost?: boolean; streaming?: boolean }
+): Promise<ArrayBuffer | ReadableStream | null> {
   if (!API_KEY || !voiceId) return null;
+
+  const body: Record<string, unknown> = {
+    text,
+    model_id: "eleven_multilingual_v3",
+    voice_settings: {
+      stability: options?.stability ?? 0.35,
+      similarity_boost: options?.similarityBoost ?? 0.7,
+      style: options?.style ?? 0.3,
+      use_speaker_boost: options?.useSpeakerBoost ?? true,
+    },
+  };
+
+  if (options?.streaming) {
+    body.streaming = true;
+    body.optimize_streaming_latency = 0;
+  }
 
   const res = await fetch(`${BASE_URL}/text-to-speech/${voiceId}`, {
     method: "POST",
@@ -24,16 +40,14 @@ export async function generateSpeech(
       "xi-api-key": API_KEY,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      text,
-      model_id: "eleven_v3",
-      voice_settings: {
-        stability: options?.stability ?? 0.5,
-        similarity_boost: options?.similarityBoost ?? 0.75,
-      },
-    }),
+    body: JSON.stringify(body),
   });
 
   if (!res.ok) return null;
+
+  if (options?.streaming && res.body) {
+    return res.body;
+  }
+
   return res.arrayBuffer();
 }

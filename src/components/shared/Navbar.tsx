@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { LogIn, LogOut } from "lucide-react";
+import { LogIn, LogOut, VolumeX, Volume2, Zap, Snail, Rabbit, Turtle, Loader2, Plus } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useSeasonal } from "@/hooks/useSeasonal";
 import { AuthModal } from "@/components/auth/AuthModal";
@@ -15,9 +15,27 @@ interface NavbarProps {
   onDarkModeChange: () => void;
   selectedVoice: string;
   onVoiceChange: (voiceId: string) => void;
+  isPlaying?: boolean;
+  onStopAudio?: () => void;
+  playbackSpeed?: number;
+  onPlaybackSpeedChange?: (speed: number) => void;
+  ttsLoading?: boolean;
+  autoPlayEnabled?: boolean;
+  onAutoPlayToggle?: () => void;
+  onResetChat?: () => void;
 }
 
-export function Navbar({ language, onLanguageChange, darkMode, onDarkModeChange, selectedVoice, onVoiceChange }: NavbarProps) {
+const SPEED_PRESETS = [0.5, 0.75, 1.0, 1.25, 1.5] as const;
+
+function SpeedIcon({ speed, current }: { speed: number; current: number }) {
+  const isActive = speed === current;
+  if (speed <= 0.5) return <Snail size={12} className={isActive ? "text-[var(--color-maw-magenta)]" : ""} />;
+  if (speed <= 0.75) return <Turtle size={12} className={isActive ? "text-[var(--color-maw-magenta)]" : ""} />;
+  if (speed <= 1.25) return <Zap size={12} className={isActive ? "text-[var(--color-maw-magenta)]" : ""} />;
+  return <Rabbit size={12} className={isActive ? "text-[var(--color-maw-magenta)]" : ""} />;
+}
+
+export function Navbar({ language, onLanguageChange, darkMode, onDarkModeChange, selectedVoice, onVoiceChange, isPlaying, onStopAudio, playbackSpeed = 1.0, onPlaybackSpeedChange, ttsLoading, autoPlayEnabled, onAutoPlayToggle, onResetChat }: NavbarProps) {
   const { user, isAdmin, logout } = useAuth();
   const seasonal = useSeasonal();
   const [showAuth, setShowAuth] = useState(false);
@@ -58,6 +76,71 @@ export function Navbar({ language, onLanguageChange, darkMode, onDarkModeChange,
 
         <div className="flex items-center gap-2">
           <VoiceSelector currentLanguage={language} onVoiceChange={onVoiceChange} />
+
+          {/* New Chat */}
+          {onResetChat && (
+            <button
+              onClick={onResetChat}
+              className="p-1.5 rounded text-[10px] text-[var(--text-muted)] hover:text-[var(--color-maw-magenta)] transition"
+              title="New conversation"
+            >
+              <Plus size={12} />
+            </button>
+          )}
+
+          {/* Auto-play toggle */}
+          {onAutoPlayToggle !== undefined && (
+            <button
+              onClick={onAutoPlayToggle}
+              className={`p-1.5 rounded text-[10px] transition ${
+                autoPlayEnabled
+                  ? "text-[var(--color-maw-magenta)]"
+                  : "text-[var(--text-muted)] opacity-50"
+              }`}
+              title={autoPlayEnabled ? "Auto-play on" : "Auto-play off"}
+            >
+              <Volume2 size={12} />
+            </button>
+          )}
+
+          {/* Speed control */}
+          {onPlaybackSpeedChange && (
+            <div className="relative flex items-center gap-0.5">
+              {SPEED_PRESETS.map((speed) => (
+                <button
+                  key={speed}
+                  onClick={() => onPlaybackSpeedChange(speed)}
+                  className={`flex flex-col items-center px-1.5 py-1 rounded text-[10px] font-medium transition ${
+                    playbackSpeed === speed
+                      ? "text-[var(--color-maw-magenta)] bg-[var(--color-maw-magenta)]/10"
+                      : "text-[var(--text-muted)] hover:text-[var(--text-secondary)] glass"
+                  }`}
+                  title={`Speed: ${speed}x`}
+                >
+                  <SpeedIcon speed={speed} current={playbackSpeed} />
+                  <span className="text-[8px] leading-none mt-0.5 opacity-60">{speed}x</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* TTS loading indicator */}
+          {ttsLoading && (
+            <div className="p-1.5 rounded text-[var(--color-maw-magenta)]" title="Loading voice...">
+              <Loader2 size={14} className="animate-spin" />
+            </div>
+          )}
+
+          {/* Global stop button */}
+          {isPlaying && onStopAudio && (
+            <button
+              onClick={onStopAudio}
+              className="p-2 rounded-full text-[var(--color-maw-magenta)] bg-[var(--color-maw-magenta)]/10 hover:bg-[var(--color-maw-magenta)]/20 transition animate-pulse"
+              title="Stop voice"
+            >
+              <VolumeX size={15} />
+            </button>
+          )}
 
           {/* Language toggle */}
           <button

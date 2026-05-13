@@ -25,7 +25,7 @@ export function WordGame() {
       const res = await fetch("/api/games?type=daily-challenge");
       const data = await res.json();
       setChallenge(data);
-    } catch {}
+    } catch (e) { console.error("Failed to load word game challenge:", e); }
     setLoading(false);
   };
 

@@ -19,17 +19,18 @@
   --bg-primary: #F5F2FF;
   --bg-secondary: #FFFFFF;
   --bg-card: rgba(255, 255, 255, 0.85);
-  --bg-glass: rgba(255, 255, 255, 0.75);
+  --bg-glass: rgba(255, 255, 255, 0.88);
   --text-primary: #1A0A2E;
   --text-secondary: #5A4A7A;
   --text-muted: #9A8AAA;
+  --text-on-user: #1A0A2E;
   --border-color: rgba(91, 91, 214, 0.12);
   --border-glass: rgba(91, 91, 214, 0.08);
   --shadow-card: 0 2px 16px rgba(91, 91, 214, 0.08);
   --shadow-glow: 0 0 24px rgba(91, 91, 214, 0.2);
   --gradient-brand: linear-gradient(135deg, #3B6EF8, #5B5BD6, #9227a0, #E91E8C);
   --gradient-accent: linear-gradient(135deg, #3B6EF8, #E91E8C);
-  --gradient-user: linear-gradient(135deg, #3B6EF8, #5B5BD6);
+  --gradient-user: linear-gradient(135deg, #D0D5FF, #B0B8FF);
   --gradient-warm: linear-gradient(135deg, #F5A623, #FF6B8A, #E91E8C);
   --gradient-orb: linear-gradient(135deg, #3B6EF8, #5B5BD6, #E91E8C);
   --scrollbar-thumb: rgba(91, 91, 214, 0.2);
@@ -44,6 +45,7 @@
   --text-primary: #ffffff;
   --text-secondary: rgba(255, 255, 255, 0.65);
   --text-muted: rgba(255, 255, 255, 0.35);
+  --text-on-user: #ffffff;
   --border-color: rgba(255, 255, 255, 0.1);
   --border-glass: rgba(255, 255, 255, 0.1);
   --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.3);

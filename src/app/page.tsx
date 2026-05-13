@@ -1,6 +1,7 @@
 "use client";
 
 import { useChat } from "@/hooks/useChat";
+import { useVoice } from "@/hooks/useVoice";
 import { Navbar } from "@/components/shared/Navbar";
 import { ChatBubble } from "@/components/chat/ChatBubble";
 import { ChatInput } from "@/components/chat/ChatInput";
@@ -13,14 +14,15 @@ import { WordGame } from "@/components/games/WordGame";
 import { RiddleCard } from "@/components/games/RiddleCard";
 import { PersonalityQuiz } from "@/components/games/PersonalityQuiz";
 import { AuthProvider } from "@/hooks/useAuth";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Gamepad2, X } from "lucide-react";
 
 type GameTab = "trivia" | "word" | "riddle" | "personality" | null;
 
 function ChatContent() {
-  const { showWelcome, startChat, messages, input, setInput, isLoading, language, setLanguage, sendMessage, messagesEndRef } = useChat();
+  const { showWelcome, startChat, messages, input, setInput, isLoading, language, setLanguage, sendMessage, messagesEndRef, resetChat } = useChat();
+  const { playAudio, isPlaying, stopAudio, ttsLoading } = useVoice();
   const [darkMode, setDarkMode] = useState(() => {
     try {
       const stored = localStorage.getItem("mawbot-theme");
@@ -29,9 +31,12 @@ function ChatContent() {
     } catch { return false; }
   });
   const [selectedVoice, setSelectedVoice] = useState("");
+  const [playbackSpeed, setPlaybackSpeed] = useState(1.0);
+  const [autoPlayEnabled, setAutoPlayEnabled] = useState(true);
   const [activeGame, setActiveGame] = useState<GameTab>(null);
+  const lastAutoPlayedRef = useRef(-1);
 
-  // Sync darkMode state with <html> class + localStorage
+  // Sync darkMode state with <html> class + localStorage + theme-color
   useEffect(() => {
     const root = document.documentElement;
     if (darkMode) {
@@ -40,7 +45,27 @@ function ChatContent() {
       root.classList.remove("dark");
     }
     localStorage.setItem("mawbot-theme", darkMode ? "dark" : "light");
+
+    // Update browser theme-color meta tag
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) {
+      meta.setAttribute("content", darkMode ? "#0A0A1A" : "#F5F2FF");
+    }
   }, [darkMode]);
+
+  // Auto-play voice for new bot messages
+  useEffect(() => {
+    if (isLoading || showWelcome || !autoPlayEnabled) return;
+    const lastMsg = messages[messages.length - 1];
+    if (!lastMsg || lastMsg.role !== "assistant") return;
+    // Skip empty content (streaming hasn't delivered text yet)
+    if (!lastMsg.content) return;
+    const msgIndex = messages.length - 1;
+    if (msgIndex <= lastAutoPlayedRef.current) return;
+    lastAutoPlayedRef.current = msgIndex;
+    const lang = language === "np" ? "ne-NP" : "en-US";
+    playAudio(lastMsg.content, selectedVoice || undefined, lang, playbackSpeed);
+  }, [messages, isLoading, showWelcome, language, selectedVoice, playAudio, playbackSpeed]);
 
   const showPrompts = messages.length === 1 && !showWelcome;
 
@@ -86,12 +111,20 @@ function ChatContent() {
         onDarkModeChange={() => setDarkMode(!darkMode)}
         selectedVoice={selectedVoice}
         onVoiceChange={setSelectedVoice}
+        isPlaying={isPlaying}
+        onStopAudio={stopAudio}
+        playbackSpeed={playbackSpeed}
+        onPlaybackSpeedChange={setPlaybackSpeed}
+        ttsLoading={ttsLoading}
+        autoPlayEnabled={autoPlayEnabled}
+        onAutoPlayToggle={() => setAutoPlayEnabled(!autoPlayEnabled)}
+        onResetChat={resetChat}
       />
 
       <div className="flex-1 overflow-y-auto px-4 py-4 relative z-10">
         <div className="max-w-4xl mx-auto">
           {messages.map((msg, i) => (
-            <ChatBubble key={i} message={msg} language={language} voiceId={selectedVoice} messageIndex={i} />
+            <ChatBubble key={i} message={msg} language={language} voiceId={selectedVoice} messageIndex={i} playAudio={playAudio} isPlaying={isPlaying} stopAudio={stopAudio} playbackSpeed={playbackSpeed} />
           ))}
           {isLoading && <TypingIndicator />}
           <div ref={messagesEndRef} />

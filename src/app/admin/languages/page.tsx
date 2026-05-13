@@ -42,7 +42,7 @@ export default function AdminLanguages() {
           setLanguages(data.languages);
         }
       }
-    } catch {}
+    } catch (e) { console.error("Failed to fetch languages:", e); }
   };
 
   const toggleLanguage = (code: string) => {
@@ -60,7 +60,7 @@ export default function AdminLanguages() {
       });
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
-    } catch {}
+    } catch (e) { console.error("Failed to save languages:", e); }
     setSaving(false);
   };
 

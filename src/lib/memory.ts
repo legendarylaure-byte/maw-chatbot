@@ -11,7 +11,7 @@ export async function getBotKnowledge(language: string = "en", category?: string
     if (category) {
       query = query.where("category", "==", category);
     }
-    const snapshot = await query.limit(15).get();
+    const snapshot = await query.limit(50).get();
 
     const entries: KnowledgeEntry[] = [];
     snapshot.forEach((doc) => {
@@ -26,7 +26,8 @@ export async function getBotKnowledge(language: string = "en", category?: string
     });
 
     return entries;
-  } catch {
+  } catch (e) {
+    console.error("getBotKnowledge failed:", e);
     return [];
   }
 }
@@ -47,7 +48,8 @@ export async function getUserMemory(userId: string): Promise<string[]> {
     });
 
     return facts;
-  } catch {
+  } catch (e) {
+    console.error("getUserMemory failed:", e);
     return [];
   }
 }
@@ -71,7 +73,61 @@ export async function saveUserMemory(userId: string, fact: string, confidence: n
         lastReferenced: new Date().toISOString(),
       });
     }
-  } catch {}
+  } catch (e) {
+    console.error("saveUserMemory failed:", e);
+  }
+}
+
+function cosineSimilarity(a: number[], b: number[]): number {
+  let dot = 0, magA = 0, magB = 0;
+  for (let i = 0; i < a.length; i++) {
+    dot += a[i] * b[i];
+    magA += a[i] * a[i];
+    magB += b[i] * b[i];
+  }
+  return dot / (Math.sqrt(magA) * Math.sqrt(magB) || 1);
+}
+
+export async function searchKnowledge(query: string, language: string = "en", limit: number = 3): Promise<KnowledgeEntry[]> {
+  try {
+    const { getEmbedding } = await import("@/lib/gemini");
+    const queryEmbedding = await getEmbedding(query);
+    const trimmedEmbedding = queryEmbedding.slice(0, 128);
+
+    const snapshot = await adminDb.collection("memory").where("active", "==", true).limit(50).get();
+
+    const scored: { entry: KnowledgeEntry; score: number }[] = [];
+
+    snapshot.forEach((doc) => {
+      const data = doc.data();
+      const storedEmbedding = data.embedding;
+      const content = data.content?.[language] || data.content?.en;
+      if (!content) return;
+
+      if (storedEmbedding && storedEmbedding.length > 0) {
+        const a = trimmedEmbedding;
+        const b = storedEmbedding.slice(0, 128);
+        const score = cosineSimilarity(a, b);
+        if (score > 0.3) {
+          scored.push({
+            entry: { content, sourceUrl: data.sourceUrl || undefined },
+            score,
+          });
+        }
+      } else {
+        scored.push({
+          entry: { content, sourceUrl: data.sourceUrl || undefined },
+          score: 0,
+        });
+      }
+    });
+
+    scored.sort((a, b) => b.score - a.score);
+    return scored.slice(0, limit).map((s) => s.entry);
+  } catch (e) {
+    console.error("searchKnowledge failed:", e);
+    return [];
+  }
 }
 
 export async function saveConversation(
@@ -87,5 +143,7 @@ export async function saveConversation(
       createdAt: new Date().toISOString(),
       messageCount: messages.length,
     });
-  } catch {}
+  } catch (e) {
+    console.error("saveConversation failed:", e);
+  }
 }

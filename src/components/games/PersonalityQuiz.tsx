@@ -29,7 +29,7 @@ export function PersonalityQuiz() {
       const res = await fetch("/api/games?type=personality-quiz");
       const data = await res.json();
       setQuiz(data);
-    } catch {}
+    } catch (e) { console.error("Failed to load personality quiz:", e); }
     setLoading(false);
   };
 

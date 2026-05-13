@@ -26,14 +26,21 @@ const adminLinks = [
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<unknown>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (u) => {
+    const unsub = onAuthStateChanged(auth, async (u) => {
       setUser(u);
+      if (u) {
+        const tokenResult = await u.getIdTokenResult();
+        setIsAdmin(tokenResult.claims.role === "admin");
+      } else {
+        setIsAdmin(false);
+      }
       setLoading(false);
     });
     return () => unsub();
@@ -47,7 +54,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     );
   }
 
-  if (!user && pathname !== "/admin/login") {
+  if ((!user || !isAdmin) && pathname !== "/admin/login") {
     router.push("/admin/login");
     return null;
   }

@@ -38,7 +38,7 @@ export default function AdminAnalytics() {
         const json = await res.json();
         setData(json);
       }
-    } catch {}
+    } catch (e) { console.error("Failed to fetch analytics:", e); }
   };
 
   const cards = [

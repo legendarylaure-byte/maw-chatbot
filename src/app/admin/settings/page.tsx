@@ -57,7 +57,7 @@ KNOWLEDGE:
       const res = await fetch("/api/admin/languages", {
         headers: { Authorization: `Bearer ${t}` },
       });
-    } catch {}
+    } catch (e) { console.error("Failed to load settings:", e); }
   };
 
   const handleSave = async () => {
@@ -76,7 +76,7 @@ KNOWLEDGE:
       });
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
-    } catch {}
+    } catch (e) { console.error("Failed to save settings:", e); }
     setSaving(false);
   };
 

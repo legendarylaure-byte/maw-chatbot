@@ -57,7 +57,7 @@ export default function AdminVoices() {
           });
         }
       }
-    } catch {}
+    } catch (e) { console.error("Failed to fetch voices:", e); }
     setLoading(false);
   };
 
@@ -72,7 +72,7 @@ export default function AdminVoices() {
           voiceId,
         }),
       });
-    } catch {}
+    } catch (e) { console.error("Failed to test voice:", e); }
     setTimeout(() => setTesting(null), 1000);
   };
 
@@ -115,7 +115,7 @@ export default function AdminVoices() {
                 setSaved(true);
                 setTimeout(() => setSaved(false), 2000);
               }
-            } catch {}
+            } catch (e) { console.error("Failed to save voice assignments:", e); }
             setSaving(false);
           }}
           className="flex items-center gap-2 px-3 py-1.5 rounded-lg gradient-glow text-xs"

@@ -30,7 +30,7 @@ export default function AdminDashboard() {
             const data = await res.json();
             setStats(data);
           }
-        } catch {}
+        } catch (e) { console.error("Failed to load admin stats:", e); }
       }
     });
     return () => unsub();

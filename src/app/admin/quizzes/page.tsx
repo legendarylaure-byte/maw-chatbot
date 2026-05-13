@@ -41,7 +41,7 @@ export default function AdminQuizzes() {
       const data = await res.json();
       const filtered = (data.items || []).filter((i: Question) => i.category === "quiz");
       setQuestions(filtered);
-    } catch {}
+    } catch (e) { console.error("Failed to load questions:", e); }
   };
 
   const addQuestion = async () => {
@@ -58,7 +58,7 @@ export default function AdminQuizzes() {
       });
       setEn("");
       loadQuestions(token);
-    } catch {}
+    } catch (e) { console.error("Failed to add question:", e); }
   };
 
   const deleteQuestion = async (id: string) => {
@@ -69,7 +69,7 @@ export default function AdminQuizzes() {
         body: JSON.stringify({ action: "delete", collection: "memory", id }),
       });
       loadQuestions(token);
-    } catch {}
+    } catch (e) { console.error("Failed to delete question:", e); }
   };
 
   return (

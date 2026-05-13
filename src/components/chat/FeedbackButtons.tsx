@@ -19,7 +19,7 @@ export function FeedbackButtons({ messageId }: FeedbackButtonsProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messageId, rating }),
       });
-    } catch {}
+    } catch (e) { console.error("Failed to send feedback:", e); }
   };
 
   return (

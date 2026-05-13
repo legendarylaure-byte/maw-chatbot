@@ -65,6 +65,17 @@ export function VoiceSelector({ currentLanguage, onVoiceChange }: VoiceSelectorP
 
   const selected = voices.find((v) => v.voice_id === selectedId);
 
+  // Filter voices by language
+  const filteredVoices = currentLanguage === "np"
+    ? voices.filter((v) => {
+        const name = v.name.toLowerCase();
+        const desc = (v.labels?.description || "").toLowerCase();
+        const accent = (v.labels?.accent || "").toLowerCase();
+        return accent === "indian" || name.includes("nepali") || name.includes("hindi") || name.includes("indian") || desc.includes("nepali") || desc.includes("hindi");
+      })
+    : voices;
+  const displayVoices = filteredVoices.length > 0 ? filteredVoices : voices;
+
   if (loading) {
     return (
       <button className="flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] glass">
@@ -73,7 +84,8 @@ export function VoiceSelector({ currentLanguage, onVoiceChange }: VoiceSelectorP
     );
   }
 
-  if (voices.length === 0) return null;
+  if (displayVoices.length === 0 && voices.length === 0) return null;
+  const showVoices = displayVoices.length > 0 ? displayVoices : voices;
 
   return (
     <div className="relative">
@@ -90,7 +102,7 @@ export function VoiceSelector({ currentLanguage, onVoiceChange }: VoiceSelectorP
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
           <div className="absolute right-0 top-full mt-1 z-20 glass rounded-xl p-1 border border-white/10 min-w-[220px] max-h-[300px] overflow-y-auto">
-            {voices.map((voice) => (
+            {showVoices.map((voice) => (
               <button
                 key={voice.voice_id}
                 onClick={() => handleSelect(voice)}

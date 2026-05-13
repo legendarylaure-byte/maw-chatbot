@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 
 interface Question {
   q: string;
@@ -28,7 +28,7 @@ export function TriviaQuiz() {
       const res = await fetch("/api/games?type=trivia");
       const data = await res.json();
       setQuestions(data.questions || []);
-    } catch {}
+    } catch (e) { console.error("Failed to load trivia quiz:", e); }
     setLoading(false);
   };
 

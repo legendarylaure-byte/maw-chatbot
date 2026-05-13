@@ -22,7 +22,7 @@ export function RiddleCard() {
       const res = await fetch("/api/games?type=riddle");
       const data = await res.json();
       setRiddle(data);
-    } catch {}
+    } catch (e) { console.error("Failed to load riddle:", e); }
     setLoading(false);
   };
 

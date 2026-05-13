@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { generateChatResponse } from "@/lib/gemini";
+import { generateChatResponse, generateChatResponseStream } from "@/lib/gemini";
 import { checkRateLimit, getRateLimitKey } from "@/lib/rate-limiter";
 import { validateMessageBody } from "@/lib/sanitizer";
 import { RATE_LIMITS } from "@/lib/constants";
 import { adminDb, adminAuth } from "@/lib/firebase-admin";
-import { getBotKnowledge, getUserMemory, saveUserMemory, saveConversation } from "@/lib/memory";
+import { getBotKnowledge, getUserMemory, saveUserMemory, saveConversation, searchKnowledge } from "@/lib/memory";
 
 export async function POST(request: NextRequest) {
   try {
@@ -38,13 +38,29 @@ export async function POST(request: NextRequest) {
 
     const { message, language: lang } = validation.sanitized;
     const language = lang || "en";
+    const stream = body.stream === true;
+    const history = body.history || [];
+    const firstUserIdx = (history as { role: string }[]).findIndex((m) => m.role === "user");
+    const chatHistory = firstUserIdx >= 0 ? history.slice(firstUserIdx) : [];
 
-    // Inject bot knowledge + user memory into context
+    // Inject bot knowledge + RAG search + user memory into context
     let contextKnowledge = "";
     try {
-      const botKnowledge = await getBotKnowledge(language);
-      if (botKnowledge.length > 0) {
-        contextKnowledge = botKnowledge
+      const [botKnowledge, ragResults] = await Promise.all([
+        getBotKnowledge(language),
+        searchKnowledge(message, language, 3),
+      ]);
+
+      const knowledgeMap = new Map<string, boolean>();
+      const allKnowledge = [...ragResults, ...botKnowledge];
+
+      if (allKnowledge.length > 0) {
+        contextKnowledge = allKnowledge
+          .filter((entry) => {
+            if (knowledgeMap.has(entry.content)) return false;
+            knowledgeMap.set(entry.content, true);
+            return true;
+          })
           .map((entry) => {
             const source = entry.sourceUrl ? ` [Source: ${entry.sourceUrl}]` : "";
             return `- ${entry.content}${source}`;
@@ -81,8 +97,59 @@ export async function POST(request: NextRequest) {
       }
     } catch (e) { console.error("📚 bot knowledge/memory fetch failed:", e); }
 
-    const messages = [{ role: "user" as const, content: message }];
-    const response = await generateChatResponse(messages, contextKnowledge);
+    const chatMessages = [
+      ...(chatHistory as { role: "user" | "assistant"; content: string }[]),
+      { role: "user" as const, content: message },
+    ];
+
+    // Streaming response
+    if (stream) {
+      const stream = await generateChatResponseStream(chatMessages, contextKnowledge);
+      const encoder = new TextEncoder();
+
+      const responseStream = new ReadableStream({
+        async start(controller) {
+          const chunks: string[] = [];
+          const reader = stream.getReader();
+          try {
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              chunks.push(value);
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text: value })}\n\n`));
+            }
+            const fullResponse = chunks.join("");
+
+            // Save conversation for authenticated users
+            if (userId) {
+              try {
+                await saveConversation(userId, [
+                  { role: "user", content: message },
+                  { role: "assistant", content: fullResponse },
+                ], language);
+              } catch (e) { console.error("💾 conversation save failed:", e); }
+            }
+
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ done: true })}\n\n`));
+            controller.close();
+          } catch (e) {
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: "Stream failed" })}\n\n`));
+            controller.close();
+          }
+        },
+      });
+
+      return new Response(responseStream, {
+        headers: {
+          "Content-Type": "text/event-stream",
+          "Cache-Control": "no-cache",
+          Connection: "keep-alive",
+        },
+      });
+    }
+
+    // Non-streaming response
+    const response = await generateChatResponse(chatMessages, contextKnowledge);
 
     // Save conversation for authenticated users
     if (userId) {

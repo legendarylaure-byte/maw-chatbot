@@ -16,6 +16,13 @@ RESPONSE STYLE:
 - Use bullet points for lists
 - If you don't know something, say: "I'd love to help you find that answer! Let me check..."
 
+STRUCTURED DATA:
+- When providing information about jobs, locations, products, or services, include a JSON code block with structured data
+- Job listings: \`\`\`json {"type":"job","title":"...","description":"...","meta":{"department":"...","location":"..."}}\`\`\`
+- Office locations: \`\`\`json {"type":"location","title":"...","description":"...","meta":{"phone":"...","hours":"..."}}\`\`\`
+- Products: \`\`\`json {"type":"product","title":"...","description":"...","meta":{"brand":"...","price":"..."}}\`\`\`
+- You can include multiple items as an array: \`\`\`json [{"type":"job","title":"..."},...]\`\`\`
+
 KNOWLEDGE:
 - MAW Group is Nepal's leading automobile conglomerate (est. 1964 as Morang Auto Works)
 - Represents 20+ global brands: Deepal, SERES, Dongfeng, Yamaha, Foton, Changan, Skoda, Jeep, Sokon, Eicher, JCB, and more
@@ -50,12 +57,13 @@ export async function generateChatResponse(
   contextKnowledge?: string
 ): Promise<string> {
   const m = getModel();
-  const history = messages.slice(0, -1).map((msg) => ({
+  const trimmed = messages.length > 20 ? messages.slice(-20) : messages;
+  const history = trimmed.slice(0, -1).map((msg) => ({
     role: msg.role === "assistant" ? "model" : "user",
     parts: [{ text: msg.content }],
   }));
 
-  const lastMessage = messages[messages.length - 1];
+  const lastMessage = trimmed[trimmed.length - 1];
 
   let knowledgeContext = "";
   if (contextKnowledge) {
@@ -69,6 +77,56 @@ export async function generateChatResponse(
   );
 
   return result.response.text();
+}
+
+export async function generateChatResponseStream(
+  messages: ChatMessage[],
+  contextKnowledge?: string
+): Promise<ReadableStream<string>> {
+  const m = getModel();
+  const trimmed = messages.length > 20 ? messages.slice(-20) : messages;
+  const history = trimmed.slice(0, -1).map((msg) => ({
+    role: msg.role === "assistant" ? "model" : "user",
+    parts: [{ text: msg.content }],
+  }));
+
+  const lastMessage = trimmed[trimmed.length - 1];
+
+  let knowledgeContext = "";
+  if (contextKnowledge) {
+    knowledgeContext = `\n\nRelevant context:\n${contextKnowledge}`;
+  }
+
+  const chat = m.startChat({ history });
+
+  const result = await chat.sendMessageStream(
+    `${lastMessage.content}${knowledgeContext}\n\nRemember: Be positive, humble, and professional!`
+  );
+
+  return new ReadableStream({
+    async start(controller) {
+      try {
+        for await (const chunk of result.stream) {
+          const text = chunk.text();
+          if (text) {
+            controller.enqueue(text);
+          }
+        }
+        controller.close();
+      } catch (e) {
+        controller.error(e);
+      }
+    },
+  });
+}
+
+export async function getEmbedding(text: string): Promise<number[]> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) throw new Error("GEMINI_API_KEY not configured");
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({ model: "text-embedding-004" });
+  const result = await model.embedContent(text.slice(0, 3000));
+  return result.embedding.values;
 }
 
 export async function summarizeText(text: string): Promise<string> {
