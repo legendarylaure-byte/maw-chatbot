@@ -36,6 +36,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const unsub = onAuthStateChanged(auth, async (u) => {
       setUser(u);
       if (u) {
+        await u.getIdToken(true);
         const tokenResult = await u.getIdTokenResult();
         setIsAdmin(tokenResult.claims.role === "admin");
       } else {
@@ -48,7 +49,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-maw-bg flex items-center justify-center">
+      <div className="min-h-screen bg-maw-bg dark flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-maw-magenta border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -59,13 +60,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return null;
   }
 
+  // Full-screen login page — no sidebar chrome
+  if (pathname === "/admin/login") {
+    return <div className="dark">{children}</div>;
+  }
+
   const handleLogout = async () => {
     await signOut(auth);
     router.push("/admin/login");
   };
 
   return (
-    <div className="min-h-screen bg-maw-bg flex">
+    <div className="min-h-screen bg-maw-bg dark flex">
       {/* Sidebar */}
       <aside
         className={`fixed md:sticky top-0 left-0 z-40 h-screen w-64 glass border-r border-white/10 transform transition-transform duration-200 ${
