@@ -3,7 +3,11 @@
 import { useState, useEffect } from "react";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { app } from "@/lib/firebase";
-import { MessageSquare, Search, ChevronDown, ChevronUp } from "lucide-react";
+import { MessageSquare, ChevronDown, ChevronUp } from "lucide-react";
+import AdminPageHeader from "@/components/admin/AdminPageHeader";
+import AdminCard from "@/components/admin/AdminCard";
+import AdminSearchBar from "@/components/admin/AdminSearchBar";
+import AdminBadge from "@/components/admin/AdminBadge";
 
 const auth = getAuth(app);
 
@@ -25,24 +29,17 @@ export default function AdminConversations() {
     const unsub = onAuthStateChanged(auth, async (user) => {
       if (user) {
         const token = await user.getIdToken();
-        fetchConversations(token);
+        try {
+          const res = await fetch("/api/admin/conversations", {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (res.ok) setConversations((await res.json()).conversations || []);
+        } catch (e) { console.error("Failed to fetch conversations:", e); }
       }
       setLoading(false);
     });
     return () => unsub();
   }, []);
-
-  const fetchConversations = async (token: string) => {
-    try {
-      const res = await fetch("/api/admin/conversations", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        const json = await res.json();
-        setConversations(json.conversations || []);
-      }
-    } catch (e) { console.error("Failed to fetch conversations:", e); }
-  };
 
   const filtered = conversations.filter((c) =>
     c.messages?.some((m) => m.content?.toLowerCase().includes(search.toLowerCase()))
@@ -50,31 +47,24 @@ export default function AdminConversations() {
 
   return (
     <div>
-      <h1 className="font-heading font-semibold text-xl text-gradient mb-2">Conversations</h1>
-      <p className="text-sm text-white/50 mb-6">Browse recent user conversations with MAWbot</p>
+      <AdminPageHeader title="Conversations" subtitle="Browse recent user conversations with MAWbot" />
 
-      <div className="relative mb-4">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search conversations..."
-          className="w-full bg-white/5 border border-white/10 rounded-lg pl-9 pr-3 py-2 text-sm outline-none focus:border-maw-magenta/50"
-        />
-      </div>
+      <AdminSearchBar value={search} onChange={setSearch} placeholder="Search conversations..." />
 
       {loading ? (
         <p className="text-sm text-white/50">Loading conversations...</p>
       ) : filtered.length === 0 ? (
-        <div className="glass rounded-xl p-6 border border-white/10 text-center text-white/50 text-sm">
-          {conversations.length === 0
-            ? "No conversations yet. Conversations will appear here as users chat with MAWbot."
-            : "No conversations match your search."}
-        </div>
+        <AdminCard delay={0.1} hover={false}>
+          <p className="text-sm text-white/50 text-center">
+            {conversations.length === 0
+              ? "No conversations yet. Conversations will appear here as users chat with MAWbot."
+              : "No conversations match your search."}
+          </p>
+        </AdminCard>
       ) : (
         <div className="space-y-2">
-          {filtered.map((conv) => (
-            <div key={conv.id} className="glass rounded-lg border border-white/10 overflow-hidden">
+          {filtered.map((conv, i) => (
+            <AdminCard key={conv.id} delay={0.05 + i * 0.03} hover={false} className="!p-0 overflow-hidden">
               <button
                 onClick={() => setExpanded(expanded === conv.id ? null : conv.id)}
                 className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/5 transition"
@@ -82,36 +72,39 @@ export default function AdminConversations() {
                 <div className="flex items-center gap-3">
                   <MessageSquare size={16} className="text-white/40" />
                   <div className="text-left">
-                    <p className="text-xs text-white/50">
-                      {new Date(conv.createdAt).toLocaleDateString()} — {conv.language?.toUpperCase() || "EN"}
-                    </p>
-                    <p className="text-sm truncate max-w-[300px]">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-white/50">
+                        {new Date(conv.createdAt).toLocaleDateString()}
+                      </span>
+                      <AdminBadge variant="brand">{conv.language?.toUpperCase() || "EN"}</AdminBadge>
+                    </div>
+                    <p className="text-sm text-white/80 truncate max-w-[300px] mt-0.5">
                       {conv.messages?.[0]?.content?.slice(0, 80)}...
                     </p>
                   </div>
                 </div>
-                {expanded === conv.id ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                {expanded === conv.id ? <ChevronUp size={16} className="text-white/40" /> : <ChevronDown size={16} className="text-white/40" />}
               </button>
               {expanded === conv.id && (
-                <div className="px-4 pb-3 space-y-2">
-                  {conv.messages?.map((msg, i) => (
+                <div className="px-4 pb-3 space-y-2 border-t border-white/5 pt-3">
+                  {conv.messages?.map((msg, j) => (
                     <div
-                      key={i}
-                      className={`p-2 rounded-lg text-sm ${
+                      key={j}
+                      className={`p-3 rounded-lg text-sm ${
                         msg.role === "user"
-                          ? "bg-[#1457ee]/20 ml-4"
+                          ? "bg-gradient-to-r from-maw-blue/20 to-maw-purple/10 ml-4"
                           : "bg-white/5 mr-4"
                       }`}
                     >
-                      <span className="text-[10px] text-white/40 block mb-0.5">
-                        {msg.role === "user" ? "User" : "MAWbot"}
+                      <span className="text-[10px] text-white/40 block mb-1 font-medium">
+                        {msg.role === "user" ? "👤 User" : "🤖 MAWbot"}
                       </span>
-                      {msg.content}
+                      <p className="text-white/80">{msg.content}</p>
                     </div>
                   ))}
                 </div>
               )}
-            </div>
+            </AdminCard>
           ))}
         </div>
       )}

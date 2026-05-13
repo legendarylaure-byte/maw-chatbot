@@ -4,6 +4,10 @@ import { useState, useEffect } from "react";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { app } from "@/lib/firebase";
 import { Volume2, Play, RefreshCw, Save, Check } from "lucide-react";
+import AdminPageHeader from "@/components/admin/AdminPageHeader";
+import AdminCard from "@/components/admin/AdminCard";
+import AdminSelect from "@/components/admin/AdminSelect";
+import AdminButton from "@/components/admin/AdminButton";
 
 const auth = getAuth(app);
 
@@ -39,14 +43,11 @@ export default function AdminVoices() {
       const data = await res.json();
       setAllVoices(data.voices || []);
       if (data.voices?.length) {
-        const enVoices = data.voices.filter((v: ElevenVoice) =>
-          v.labels?.accent === "american" || v.name.toLowerCase().includes("english")
+        const maleVoices = data.voices.filter((v: ElevenVoice) =>
+          v.labels?.gender === "male" || v.name.toLowerCase().includes("male")
         );
         const npVoices = data.voices.filter((v: ElevenVoice) =>
           v.labels?.accent === "indian" || v.name.toLowerCase().includes("hindi") || v.name.toLowerCase().includes("indian")
-        );
-        const maleVoices = data.voices.filter((v: ElevenVoice) =>
-          v.labels?.gender === "male" || v.name.toLowerCase().includes("male")
         );
         if (!assignments["en-male"]) {
           setAssignments({
@@ -64,7 +65,7 @@ export default function AdminVoices() {
   const testVoice = async (voiceId: string) => {
     setTesting(voiceId);
     try {
-      await fetch("/api/tts", {
+      const res = await fetch("/api/tts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -72,8 +73,34 @@ export default function AdminVoices() {
           voiceId,
         }),
       });
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      audio.onended = () => URL.revokeObjectURL(url);
+      await audio.play();
     } catch (e) { console.error("Failed to test voice:", e); }
-    setTimeout(() => setTesting(null), 1000);
+    setTesting(null);
+  };
+
+  const saveAssignments = async () => {
+    setSaving(true);
+    try {
+      const user = auth.currentUser;
+      if (user) {
+        const token = await user.getIdToken();
+        await fetch("/api/admin/memory", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "update", collection: "admin_settings", id: "voices",
+            data: { assignments },
+          }),
+        });
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000);
+      }
+    } catch (e) { console.error("Failed to save voice assignments:", e); }
+    setSaving(false);
   };
 
   const voiceSlots = [
@@ -85,101 +112,73 @@ export default function AdminVoices() {
 
   return (
     <div>
-      <h1 className="font-heading font-semibold text-xl text-gradient mb-2">Voice Manager</h1>
-      <p className="text-sm text-white/50 mb-6">Manage ElevenLabs voices for male/female across languages</p>
-
-      <div className="flex items-center gap-2 mb-4">
-        <button
-          onClick={fetchVoices}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-lg glass text-xs hover:bg-white/10 transition"
-        >
-          <RefreshCw size={14} /> Refresh Voices
-        </button>
-        <button
-          onClick={async () => {
-            setSaving(true);
-            try {
-              const user = auth.currentUser;
-              if (user) {
-                const token = await user.getIdToken();
-                await fetch("/api/admin/memory", {
-                  method: "POST",
-                  headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    action: "update",
-                    collection: "admin_settings",
-                    id: "voices",
-                    data: { assignments },
-                  }),
-                });
-                setSaved(true);
-                setTimeout(() => setSaved(false), 2000);
-              }
-            } catch (e) { console.error("Failed to save voice assignments:", e); }
-            setSaving(false);
-          }}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-lg gradient-glow text-xs"
-        >
-          {saving ? <RefreshCw size={14} className="animate-spin" /> : saved ? <Check size={14} /> : <Save size={14} />}
-          {saved ? "Saved" : "Save Assignments"}
-        </button>
-      </div>
+      <AdminPageHeader
+        title="Voice Manager"
+        subtitle="Manage ElevenLabs voices for male/female across languages"
+        actions={
+          <div className="flex items-center gap-2">
+            <AdminButton variant="secondary" onClick={fetchVoices} icon={<RefreshCw size={14} />}>
+              Refresh Voices
+            </AdminButton>
+            <AdminButton onClick={saveAssignments} loading={saving}
+              icon={saved ? <Check size={14} /> : <Save size={14} />}>
+              {saved ? "Saved" : "Save Assignments"}
+            </AdminButton>
+          </div>
+        }
+      />
 
       {loading ? (
         <p className="text-sm text-white/50">Loading voices from ElevenLabs...</p>
       ) : allVoices.length === 0 ? (
-        <div className="glass rounded-xl p-6 border border-white/10 text-center text-white/50 text-sm">
-          No ElevenLabs voices available. Check your API key configuration.
-        </div>
+        <AdminCard delay={0.1} hover={false}>
+          <p className="text-sm text-white/50 text-center">
+            No ElevenLabs voices available. Check your API key configuration.
+          </p>
+        </AdminCard>
       ) : (
         <div className="space-y-4 max-w-2xl">
           {voiceSlots.map((slot) => (
-            <div key={slot.id} className="glass rounded-xl p-4 border border-white/10">
-              <div className="flex items-center justify-between mb-2">
+            <AdminCard key={slot.id} delay={0.08}>
+              <div className="flex items-center justify-between mb-3">
                 <div>
-                  <h3 className="text-sm font-medium">{slot.label}</h3>
+                  <h3 className="text-sm font-medium text-white">{slot.label}</h3>
                   <span className="text-[10px] text-white/50">{slot.lang === "en" ? "English" : "Nepali"}</span>
                 </div>
                 {assignments[slot.id] && (
-                  <button
-                    onClick={() => testVoice(assignments[slot.id])}
+                  <AdminButton variant="secondary" onClick={() => testVoice(assignments[slot.id])}
                     disabled={testing === assignments[slot.id]}
-                    className="flex items-center gap-1 px-2 py-1 rounded-lg bg-white/5 text-xs hover:bg-white/10 transition"
-                  >
-                    {testing === assignments[slot.id] ? (
-                      <RefreshCw size={12} className="animate-spin" />
-                    ) : (
-                      <Play size={12} />
-                    )}
+                    loading={testing === assignments[slot.id]}
+                    icon={<Play size={12} />}>
                     Test
-                  </button>
+                  </AdminButton>
                 )}
               </div>
-              <select
+              <AdminSelect
                 value={assignments[slot.id] || ""}
                 onChange={(e) => setAssignments({ ...assignments, [slot.id]: e.target.value })}
-                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-maw-magenta/50"
               >
                 <option value="">Select a voice...</option>
                 {allVoices.map((v) => (
                   <option key={v.voice_id} value={v.voice_id}>
-                    {v.name} {v.labels?.description ? `— ${v.labels.description}` : ""}
+                    {v.name}{v.labels?.description ? ` — ${v.labels.description}` : ""}
                   </option>
                 ))}
-              </select>
-            </div>
+              </AdminSelect>
+            </AdminCard>
           ))}
 
-          <div className="glass rounded-xl p-4 border border-white/10">
-            <h3 className="text-sm font-medium mb-2">All Available Voices</h3>
-            <div className="grid gap-1.5 max-h-48 overflow-y-auto">
+          <AdminCard delay={0.2}>
+            <h3 className="text-sm font-medium text-white mb-3">All Available Voices</h3>
+            <div className="space-y-1 max-h-48 overflow-y-auto">
               {allVoices.map((v) => (
-                <div key={v.voice_id} className="flex items-center justify-between p-2 rounded-lg bg-white/5 text-sm">
+                <div key={v.voice_id}
+                  className="flex items-center justify-between p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-all text-sm">
                   <div className="flex items-center gap-2 min-w-0">
                     <Volume2 size={14} className="shrink-0 text-white/40" />
-                    <span className="truncate">{v.name}</span>
+                    <span className="truncate text-white/80">{v.name}</span>
                     {v.labels?.description && (
-                      <span className="text-[10px] text-white/40 truncate hidden sm:inline">
+                      <span className="text-[10px] text-white/30 truncate hidden sm:inline">
                         {v.labels.description}
                       </span>
                     )}
@@ -187,7 +186,7 @@ export default function AdminVoices() {
                   <button
                     onClick={() => testVoice(v.voice_id)}
                     disabled={testing === v.voice_id}
-                    className="shrink-0 p-1 rounded hover:bg-white/10 transition"
+                    className="shrink-0 p-1.5 rounded-lg hover:bg-white/10 transition text-white/40 hover:text-white disabled:opacity-40"
                   >
                     {testing === v.voice_id ? (
                       <RefreshCw size={12} className="animate-spin" />
@@ -198,7 +197,7 @@ export default function AdminVoices() {
                 </div>
               ))}
             </div>
-          </div>
+          </AdminCard>
         </div>
       )}
     </div>

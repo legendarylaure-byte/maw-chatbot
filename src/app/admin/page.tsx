@@ -3,7 +3,10 @@
 import { useEffect, useState } from "react";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { app } from "@/lib/firebase";
-import { Brain, MessageSquare, Gamepad2, Users, Activity } from "lucide-react";
+import { Brain, MessageSquare, Gamepad2, Users, ArrowRight, Sparkles } from "lucide-react";
+import AdminPageHeader from "@/components/admin/AdminPageHeader";
+import AdminCard from "@/components/admin/AdminCard";
+import AdminButton from "@/components/admin/AdminButton";
 
 const auth = getAuth(app);
 
@@ -45,55 +48,59 @@ export default function AdminDashboard() {
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="font-heading font-semibold text-xl text-gradient">Dashboard</h1>
-        <p className="text-sm text-white/50 mt-1">
-          Welcome back{user && "email" in (user as object) ? `, ${(user as { email?: string }).email || ""}` : ""}!
-        </p>
-      </div>
+      <AdminPageHeader
+        title="Dashboard"
+        subtitle={`Welcome back${user && "email" in (user as object) ? `, ${(user as { email?: string }).email || ""}` : ""}!`}
+      />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {statsCards.map((card) => {
+        {statsCards.map((card, i) => {
           const Icon = card.icon;
           return (
-            <div key={card.label} className="glass rounded-xl p-4 border border-white/10">
+            <AdminCard key={card.label} delay={i * 0.08}>
               <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${card.color} flex items-center justify-center`}>
-                  <Icon size={18} />
+                <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${card.color} flex items-center justify-center shadow-lg`}>
+                  <Icon size={18} className="text-white" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{card.value}</p>
+                  <p className="text-2xl font-bold text-white">{card.value}</p>
                   <p className="text-xs text-white/50">{card.label}</p>
                 </div>
               </div>
-            </div>
+            </AdminCard>
           );
         })}
       </div>
 
-      <div className="glass rounded-xl p-6 border border-white/10">
-        <h2 className="font-heading font-semibold text-sm mb-4">Quick Actions</h2>
+      <AdminCard delay={0.3}>
+        <h2 className="font-heading font-semibold text-sm mb-4 flex items-center gap-2">
+          <Sparkles size={14} className="text-maw-magenta" />
+          Quick Actions
+        </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           <a
             href="/admin/memory"
-            className="p-3 rounded-lg bg-white/5 hover:bg-white/10 transition text-sm"
+            className="flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-all text-sm group"
           >
-            ✏️ Add new knowledge
+            <span>✏️ Add new knowledge</span>
+            <ArrowRight size={14} className="text-white/20 group-hover:text-maw-magenta transition-colors" />
           </a>
           <a
             href="/admin/jokes"
-            className="p-3 rounded-lg bg-white/5 hover:bg-white/10 transition text-sm"
+            className="flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-all text-sm group"
           >
-            😂 Manage jokes
+            <span>😂 Manage jokes</span>
+            <ArrowRight size={14} className="text-white/20 group-hover:text-maw-magenta transition-colors" />
           </a>
           <a
             href="/admin/settings"
-            className="p-3 rounded-lg bg-white/5 hover:bg-white/10 transition text-sm"
+            className="flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-all text-sm group"
           >
-            ⚙️ Bot settings
+            <span>⚙️ Bot settings</span>
+            <ArrowRight size={14} className="text-white/20 group-hover:text-maw-magenta transition-colors" />
           </a>
         </div>
-      </div>
+      </AdminCard>
     </div>
   );
 }

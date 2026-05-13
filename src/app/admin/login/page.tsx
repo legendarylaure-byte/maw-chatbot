@@ -153,7 +153,7 @@ export default function AdminLogin() {
                       onChange={(e) => setEmail(e.target.value)}
                       onFocus={() => setFocused(true)}
                       onBlur={() => setFocused(false)}
-                      className="w-full bg-white/5 border border-white/10 rounded-lg pl-9 pr-3 py-2.5 text-sm outline-none transition-all duration-300 focus:border-maw-magenta/50 focus:bg-white/10 focus:shadow-[0_0_15px_rgba(233,30,140,0.1)]"
+                      className="w-full bg-white/5 border border-white/10 rounded-lg pl-9 pr-3 py-2.5 text-sm text-white outline-none transition-all duration-300 focus:border-maw-magenta/50 focus:bg-white/10 focus:shadow-[0_0_15px_rgba(233,30,140,0.1)] [&:-webkit-autofill]:[-webkit-text-fill-color:white] [&:-webkit-autofill]:[-webkit-box-shadow:0_0_0_30px_#1a1a2e_inset]"
                       placeholder="mesaykar@gmail.com"
                       required
                     />
@@ -175,7 +175,7 @@ export default function AdminLogin() {
                       onChange={(e) => setPassword(e.target.value)}
                       onFocus={() => setFocused(true)}
                       onBlur={() => setFocused(false)}
-                      className="w-full bg-white/5 border border-white/10 rounded-lg pl-9 pr-3 py-2.5 text-sm outline-none transition-all duration-300 focus:border-maw-magenta/50 focus:bg-white/10 focus:shadow-[0_0_15px_rgba(233,30,140,0.1)]"
+                      className="w-full bg-white/5 border border-white/10 rounded-lg pl-9 pr-3 py-2.5 text-sm text-white outline-none transition-all duration-300 focus:border-maw-magenta/50 focus:bg-white/10 focus:shadow-[0_0_15px_rgba(233,30,140,0.1)] [&:-webkit-autofill]:[-webkit-text-fill-color:white] [&:-webkit-autofill]:[-webkit-box-shadow:0_0_0_30px_#1a1a2e_inset]"
                       placeholder="••••••••"
                       required
                     />

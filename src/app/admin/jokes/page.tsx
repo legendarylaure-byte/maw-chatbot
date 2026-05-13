@@ -3,7 +3,11 @@
 import { useState, useEffect } from "react";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { app } from "@/lib/firebase";
-import { Plus, Trash2, RefreshCw } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
+import AdminPageHeader from "@/components/admin/AdminPageHeader";
+import AdminCard from "@/components/admin/AdminCard";
+import AdminInput from "@/components/admin/AdminInput";
+import AdminButton from "@/components/admin/AdminButton";
 
 const auth = getAuth(app);
 
@@ -26,7 +30,7 @@ export default function AdminJokes() {
       if (user) {
         const t = await user.getIdToken();
         setToken(t);
-        loadJokes(t);
+        await loadJokes(t);
       }
       setLoading(false);
     });
@@ -39,8 +43,7 @@ export default function AdminJokes() {
         headers: { Authorization: `Bearer ${t}` },
       });
       const data = await res.json();
-      const filtered = (data.items || []).filter((i: Joke & { category: string }) => i.category === "joke");
-      setJokes(filtered);
+      setJokes((data.items || []).filter((i: Joke & { category: string }) => i.category === "joke"));
     } catch (e) { console.error("Failed to load jokes:", e); }
   };
 
@@ -51,14 +54,12 @@ export default function AdminJokes() {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         body: JSON.stringify({
-          action: "create",
-          collection: "memory",
+          action: "create", collection: "memory",
           data: { content: { en, np }, category: "joke", active: true, keywords: ["joke", "humor"] },
         }),
       });
-      setEn("");
-      setNp("");
-      loadJokes(token);
+      setEn(""); setNp("");
+      await loadJokes(token);
     } catch (e) { console.error("Failed to add joke:", e); }
   };
 
@@ -69,50 +70,45 @@ export default function AdminJokes() {
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         body: JSON.stringify({ action: "delete", collection: "memory", id }),
       });
-      loadJokes(token);
+      await loadJokes(token);
     } catch (e) { console.error("Failed to delete joke:", e); }
   };
 
   return (
     <div>
-      <h1 className="font-heading font-semibold text-xl text-gradient mb-2">Joke Manager 😂</h1>
-      <p className="text-sm text-white/50 mb-6">Manage positive jokes for MAWbot</p>
+      <AdminPageHeader title="Joke Manager" subtitle="Manage positive jokes for MAWbot" />
 
-      <div className="glass rounded-xl p-4 border border-white/10 mb-6 space-y-3">
-        <h2 className="text-sm font-medium">Add New Joke</h2>
-        <input
-          value={en}
-          onChange={(e) => setEn(e.target.value)}
-          placeholder="Joke in English"
-          className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none"
-        />
-        <input
-          value={np}
-          onChange={(e) => setNp(e.target.value)}
-          placeholder="Joke in Nepali (optional)"
-          className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none lang-np"
-        />
-        <button onClick={addJoke} disabled={!en.trim()} className="flex items-center gap-2 px-4 py-2 rounded-lg gradient-glow text-sm disabled:opacity-30">
-          <Plus size={16} /> Add Joke
-        </button>
-      </div>
+      <AdminCard delay={0.1} className="mb-6">
+        <h2 className="text-sm font-medium mb-3">Add New Joke</h2>
+        <div className="space-y-3">
+          <AdminInput value={en} onChange={(e) => setEn(e.target.value)} placeholder="Joke in English" />
+          <AdminInput value={np} onChange={(e) => setNp(e.target.value)} placeholder="Joke in Nepali (optional)" className="lang-np" />
+          <AdminButton onClick={addJoke} disabled={!en.trim()} icon={<Plus size={15} />}>
+            Add Joke
+          </AdminButton>
+        </div>
+      </AdminCard>
 
       {loading ? (
         <p className="text-sm text-white/50">Loading...</p>
       ) : jokes.length === 0 ? (
-        <p className="text-sm text-white/50">No jokes yet. Add one above!</p>
+        <AdminCard delay={0.2} hover={false}>
+          <p className="text-sm text-white/50 text-center">No jokes yet. Add one above!</p>
+        </AdminCard>
       ) : (
         <div className="space-y-2">
-          {jokes.map((joke) => (
-            <div key={joke.id} className="glass rounded-lg p-3 border border-white/10 flex items-start justify-between gap-3">
-              <div className="flex-1 min-w-0">
-                <p className="text-sm">{joke.content?.en}</p>
-                {joke.content?.np && <p className="text-sm text-white/50 mt-1 lang-np">{joke.content.np}</p>}
+          {jokes.map((joke, i) => (
+            <AdminCard key={joke.id} delay={0.1 + i * 0.04}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-white">{joke.content?.en}</p>
+                  {joke.content?.np && <p className="text-sm text-white/50 mt-1 lang-np">{joke.content.np}</p>}
+                </div>
+                <AdminButton variant="danger" onClick={() => deleteJoke(joke.id)}>
+                  <Trash2 size={14} />
+                </AdminButton>
               </div>
-              <button onClick={() => deleteJoke(joke.id)} className="p-1.5 rounded-lg hover:bg-red-500/20 hover:text-red-400 transition shrink-0">
-                <Trash2 size={14} />
-              </button>
-            </div>
+            </AdminCard>
           ))}
         </div>
       )}
