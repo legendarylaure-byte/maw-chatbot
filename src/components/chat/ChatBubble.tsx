@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Volume2, StopCircle } from "lucide-react";
 import { FeedbackButtons } from "./FeedbackButtons";
@@ -32,32 +31,10 @@ function extractSources(content: string): { text: string; sources: string[] } {
 export function ChatBubble({ message, language, voiceId, messageIndex, playAudio, isPlaying, stopAudio, playbackSpeed }: ChatBubbleProps) {
   const isUser = message.role === "user";
   const { text, sources } = extractSources(message.content);
-  const [displayedText, setDisplayedText] = useState(isUser ? text : "");
-  const [showCursor, setShowCursor] = useState(!isUser);
 
-  // Typewriter effect for bot messages
-  useEffect(() => {
-    if (isUser) return;
-    let i = 0;
-    const speed = 15;
-    setDisplayedText("");
-
-    const timer = setInterval(() => {
-      i++;
-      setDisplayedText(text.slice(0, i));
-      if (i >= text.length) {
-        clearInterval(timer);
-        setTimeout(() => setShowCursor(false), 600);
-      }
-    }, speed);
-
-    return () => clearInterval(timer);
-  }, [text, isUser]);
-
-  // Extract cards from the fully displayed text
   const { cards, text: displayText } = isUser
     ? { cards: [] as ReturnType<typeof extractCards>["cards"], text }
-    : extractCards(displayedText);
+    : extractCards(text);
 
   const handlePlay = () => {
     if (isPlaying) {
@@ -111,7 +88,7 @@ export function ChatBubble({ message, language, voiceId, messageIndex, playAudio
               <div
                 className={`text-sm leading-relaxed ${language === "np" ? "lang-np" : ""} text-[var(--text-primary)]`}
                 dangerouslySetInnerHTML={{
-                  __html: renderContent(displayText) + (showCursor ? '<span class="typing-cursor"></span>' : ""),
+                  __html: renderContent(displayText),
                 }}
               />
               <RichCards cards={cards} />
