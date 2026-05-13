@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { LogIn, LogOut, VolumeX, Volume2, Zap, Snail, Rabbit, Turtle, Loader2, Plus } from "lucide-react";
+import { LogIn, LogOut, VolumeX, Volume2, Zap, Snail, Rabbit, Turtle, Loader2, Home } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useSeasonal } from "@/hooks/useSeasonal";
 import { AuthModal } from "@/components/auth/AuthModal";
@@ -77,14 +77,15 @@ export function Navbar({ language, onLanguageChange, darkMode, onDarkModeChange,
         <div className="flex items-center gap-2">
           <VoiceSelector currentLanguage={language} onVoiceChange={onVoiceChange} />
 
-          {/* New Chat */}
+          {/* Home / New Chat */}
           {onResetChat && (
             <button
               onClick={onResetChat}
-              className="p-1.5 rounded text-[10px] text-[var(--text-muted)] hover:text-[var(--color-maw-magenta)] transition"
-              title="New conversation"
+              className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium glass hover:bg-[var(--border-color)] transition text-[var(--text-secondary)] hover:text-[var(--color-maw-magenta)]"
+              title="Back to home"
             >
-              <Plus size={12} />
+              <Home size={14} />
+              <span>{language === "en" ? "Home" : "गृहपृष्ठ"}</span>
             </button>
           )}
 
