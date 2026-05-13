@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback } from "react";
 
 interface Message {
   role: "user" | "assistant";
@@ -18,20 +18,9 @@ const WELCOME_MESSAGE: Message = {
     "Namaste! 🙏 I'm **MAWbot**, your official AI assistant for MAW Group of Companies. How can I brighten your day today? ✨",
 };
 
-const STORAGE_KEY = "mawbot-messages";
-
 export function useChat() {
   const [showWelcome, setShowWelcome] = useState(true);
-  const [messages, setMessages] = useState<Message[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-      } catch (e) { console.error("Failed to restore messages from localStorage:", e); }
-    return [WELCOME_MESSAGE];
-  });
+  const [messages, setMessages] = useState<Message[]>([WELCOME_MESSAGE]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [language, setLanguage] = useState<"en" | "np">("en");
@@ -39,12 +28,6 @@ export function useChat() {
   messagesRef.current = messages;
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Persist messages to localStorage
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
-    } catch (e) { console.error("Failed to persist messages to localStorage:", e); }
-  }, [messages]);
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
@@ -159,7 +142,6 @@ export function useChat() {
 
   const resetChat = useCallback(() => {
     setMessages([WELCOME_MESSAGE]);
-    try { localStorage.removeItem(STORAGE_KEY); } catch (e) { console.error("Failed to clear localStorage:", e); }
     setShowWelcome(true);
   }, []);
 
