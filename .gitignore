@@ -42,3 +42,6 @@ firebase-debug.log
 
 # Crawler temp files
 temp/
+
+# Sensitive keys directory
+Keys/
