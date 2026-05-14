@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { app } from "@/lib/firebase";
-import { Volume2, Play, RefreshCw, Save, Check } from "lucide-react";
+import { Volume2, Play, RefreshCw, Save, Check, Search, Plus } from "lucide-react";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import AdminCard from "@/components/admin/AdminCard";
 import AdminSelect from "@/components/admin/AdminSelect";
@@ -27,6 +27,10 @@ export default function AdminVoices() {
   const [saved, setSaved] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [filter, setFilter] = useState<string>("all");
+  const [sharedVoices, setSharedVoices] = useState<ElevenVoice[]>([]);
+  const [browsing, setBrowsing] = useState(false);
+  const [browsingAccent, setBrowsingAccent] = useState<string>("");
+  const [addingVoice, setAddingVoice] = useState<string | null>(null);
 
   const showMessage = (msg: string) => {
     setStatusMessage(msg);
@@ -157,6 +161,47 @@ export default function AdminVoices() {
     setSaving(false);
   };
 
+  const browseSharedVoices = async (accent: string) => {
+    setBrowsing(true);
+    setBrowsingAccent(accent);
+    try {
+      const res = await fetch(`/api/tts/voices/shared?accent=${encodeURIComponent(accent)}&pageSize=20`);
+      const data = await res.json();
+      setSharedVoices(data.voices || []);
+      if (!data.voices?.length) {
+        showMessage(`No shared ${accent} voices found in ElevenLabs library.`);
+      }
+    } catch (e) {
+      showMessage("Failed to browse shared voices. Check console.");
+      console.error("Browse shared voices error:", e);
+    }
+    setBrowsing(false);
+  };
+
+  const addSharedVoice = async (voiceId: string, name: string) => {
+    setAddingVoice(voiceId);
+    try {
+      const res = await fetch("/api/tts/voices/add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ voice_id: voiceId, name }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Unknown error" }));
+        showMessage(`Failed to add voice: ${err.error}`);
+        setAddingVoice(null);
+        return;
+      }
+      showMessage(`Added "${name}" to your voices. Refreshing list...`);
+      setSharedVoices([]);
+      await fetchVoices();
+    } catch (e) {
+      showMessage("Failed to add voice. Check console.");
+      console.error("Add voice error:", e);
+    }
+    setAddingVoice(null);
+  };
+
   const voiceSlots = [
     { id: "en-male", label: "English Male", lang: "en" },
     { id: "en-female", label: "English Female", lang: "en" },
@@ -244,35 +289,128 @@ export default function AdminVoices() {
               </div>
             </div>
             <div className="space-y-1 max-h-48 overflow-y-auto">
-              {allVoices
-                .filter((v) => filter === "all" || v.labels?.accent?.toLowerCase() === filter || v.name.toLowerCase().includes(filter))
-                .map((v) => (
-                <div key={v.voice_id}
-                  className="flex items-center justify-between p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-all text-sm">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <Volume2 size={14} className="shrink-0 text-white/40" />
-                    <span className="truncate text-white/80">{v.name}</span>
-                    {v.labels?.description && (
-                      <span className="text-[10px] text-white/30 truncate hidden sm:inline">
-                        {v.labels.description}
-                      </span>
-                    )}
+              {(() => {
+                const filtered = allVoices.filter(
+                  (v) => filter === "all" || v.labels?.accent?.toLowerCase() === filter || v.name.toLowerCase().includes(filter)
+                );
+                if (filtered.length === 0) {
+                  return (
+                    <div className="p-3 text-center text-white/40 text-xs space-y-2">
+                      <p>No {filter} voices in your account.</p>
+                      <button
+                        onClick={() => browseSharedVoices(filter)}
+                        disabled={browsing}
+                        className="inline-flex items-center gap-1 px-2 py-1 rounded bg-white/10 hover:bg-white/20 text-white/60 hover:text-white transition text-[10px] disabled:opacity-40"
+                      >
+                        {browsing && browsingAccent === filter ? (
+                          <RefreshCw size={10} className="animate-spin" />
+                        ) : (
+                          <Search size={10} />
+                        )}
+                        Browse ElevenLabs {filter.charAt(0).toUpperCase() + filter.slice(1)} Voices
+                      </button>
+                    </div>
+                  );
+                }
+                return filtered.map((v) => (
+                  <div key={v.voice_id}
+                    className="flex items-center justify-between p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-all text-sm">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Volume2 size={14} className="shrink-0 text-white/40" />
+                      <span className="truncate text-white/80">{v.name}</span>
+                      {v.labels?.description && (
+                        <span className="text-[10px] text-white/30 truncate hidden sm:inline">
+                          {v.labels.description}
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => testVoice(v.voice_id)}
+                      disabled={testing === v.voice_id}
+                      className="shrink-0 p-1.5 rounded-lg hover:bg-white/10 transition text-white/40 hover:text-white disabled:opacity-40"
+                    >
+                      {testing === v.voice_id ? (
+                        <RefreshCw size={12} className="animate-spin" />
+                      ) : (
+                        <Play size={12} />
+                      )}
+                    </button>
                   </div>
-                  <button
-                    onClick={() => testVoice(v.voice_id)}
-                    disabled={testing === v.voice_id}
-                    className="shrink-0 p-1.5 rounded-lg hover:bg-white/10 transition text-white/40 hover:text-white disabled:opacity-40"
-                  >
-                    {testing === v.voice_id ? (
-                      <RefreshCw size={12} className="animate-spin" />
-                    ) : (
-                      <Play size={12} />
-                    )}
-                  </button>
-                </div>
-              ))}
+                ));
+              })()}
             </div>
           </AdminCard>
+
+          {sharedVoices.length > 0 && (
+            <AdminCard delay={0.25}>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-medium text-white">
+                  Shared {browsingAccent.charAt(0).toUpperCase() + browsingAccent.slice(1)} Voices
+                </h3>
+                <button
+                  onClick={() => { setSharedVoices([]); setBrowsingAccent(""); }}
+                  className="text-[10px] text-white/40 hover:text-white/80 transition"
+                >
+                  Close
+                </button>
+              </div>
+              <p className="text-[10px] text-white/30 mb-3">
+                Click a voice to preview, then <strong>Add</strong> to add it to your account.
+              </p>
+              <div className="space-y-1 max-h-60 overflow-y-auto">
+                {sharedVoices.map((v) => (
+                  <div key={v.voice_id}
+                    className="flex items-center justify-between p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-all text-sm">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Volume2 size={14} className="shrink-0 text-white/40" />
+                      <span className="truncate text-white/80">{v.name}</span>
+                      {v.labels?.accent && (
+                        <span className="text-[10px] text-white/30 truncate hidden sm:inline">
+                          {v.labels.accent}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      {v.preview_url && (
+                        <button
+                          onClick={async () => {
+                            setTesting(v.voice_id);
+                            try {
+                              const audio = new Audio(v.preview_url!);
+                              audio.onended = () => setTesting(null);
+                              await audio.play();
+                            } catch {
+                              showMessage("Preview playback failed. Try adding and using TTS.");
+                              setTesting(null);
+                            }
+                          }}
+                          disabled={testing === v.voice_id}
+                          className="p-1.5 rounded-lg hover:bg-white/10 transition text-white/40 hover:text-white disabled:opacity-40"
+                        >
+                          {testing === v.voice_id ? (
+                            <RefreshCw size={12} className="animate-spin" />
+                          ) : (
+                            <Play size={12} />
+                          )}
+                        </button>
+                      )}
+                      <button
+                        onClick={() => addSharedVoice(v.voice_id, v.name)}
+                        disabled={addingVoice === v.voice_id}
+                        className="p-1.5 rounded-lg hover:bg-white/10 transition text-green-400/60 hover:text-green-400 disabled:opacity-40"
+                      >
+                        {addingVoice === v.voice_id ? (
+                          <RefreshCw size={12} className="animate-spin" />
+                        ) : (
+                          <Plus size={12} />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </AdminCard>
+          )}
         </div>
       )}
     </div>

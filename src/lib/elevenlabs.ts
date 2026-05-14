@@ -26,7 +26,7 @@ export async function generateSpeech(
 
   const body: Record<string, unknown> = {
     text,
-    model_id: "eleven_multilingual_v3",
+    model_id: "eleven_v3",
     voice_settings: {
       stability: options?.stability ?? 0.35,
       similarity_boost: options?.similarityBoost ?? 0.7,
