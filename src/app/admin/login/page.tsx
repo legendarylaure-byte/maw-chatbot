@@ -44,19 +44,20 @@ const shakeVariants: Variants = {
 };
 
 if (typeof window !== "undefined") {
-  (window as Record<string, unknown>)._fbDiag = async () => {
-    const key = (app as Record<string, unknown>).options?.["apiKey"] || "";
+  (window as unknown as Record<string, unknown>)._fbDiag = async () => {
+    const opts = app.options as { apiKey?: string };
+    const key = opts.apiKey || "";
     const r: string[] = [];
     if (!key) return "no apiKey";
     for (const t of [
-      ["identitytoolkit", `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${key}`, JSON.stringify({ email: "d@d.com", password: "d", returnSecureToken: true })],
-      ["securetoken", `https://securetoken.googleapis.com/v1/token?key=${key}`, JSON.stringify({ grantType: "refresh_token", refreshToken: "d" })],
-      ["authDomain", "https://maw-chatbot.firebaseapp.com/__/auth/iframe", ""],
+      { n: "identitytoolkit", u: `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${key}`, b: JSON.stringify({ email: "d@d.com", password: "d", returnSecureToken: true }) },
+      { n: "securetoken", u: `https://securetoken.googleapis.com/v1/token?key=${key}`, b: JSON.stringify({ grantType: "refresh_token", refreshToken: "d" }) },
+      { n: "authDomain", u: "https://maw-chatbot.firebaseapp.com/__/auth/iframe", b: "" },
     ]) {
       try {
-        const resp = await fetch(t[1], { method: t[2] ? "POST" : "GET", headers: { "Content-Type": "application/json" }, body: t[2] || undefined });
-        r.push(`${t[0]}: ${resp.status}`);
-      } catch (e) { r.push(`${t[0]}: FAIL - ${(e as Error).message}`); }
+        const resp = await fetch(t.u, { method: t.b ? "POST" : "GET", headers: { "Content-Type": "application/json" }, body: t.b || undefined });
+        r.push(`${t.n}: ${resp.status}`);
+      } catch (e) { r.push(`${t.n}: FAIL - ${(e as Error).message}`); }
     }
     console.log("[FB Diag]", r.join(" | "));
     return r.join(" | ");
