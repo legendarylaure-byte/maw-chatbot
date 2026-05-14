@@ -43,6 +43,26 @@ const shakeVariants: Variants = {
   },
 };
 
+if (typeof window !== "undefined") {
+  (window as Record<string, unknown>)._fbDiag = async () => {
+    const key = (app as Record<string, unknown>).options?.["apiKey"] || "";
+    const r: string[] = [];
+    if (!key) return "no apiKey";
+    for (const t of [
+      ["identitytoolkit", `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${key}`, JSON.stringify({ email: "d@d.com", password: "d", returnSecureToken: true })],
+      ["securetoken", `https://securetoken.googleapis.com/v1/token?key=${key}`, JSON.stringify({ grantType: "refresh_token", refreshToken: "d" })],
+      ["authDomain", "https://maw-chatbot.firebaseapp.com/__/auth/iframe", ""],
+    ]) {
+      try {
+        const resp = await fetch(t[1], { method: t[2] ? "POST" : "GET", headers: { "Content-Type": "application/json" }, body: t[2] || undefined });
+        r.push(`${t[0]}: ${resp.status}`);
+      } catch (e) { r.push(`${t[0]}: FAIL - ${(e as Error).message}`); }
+    }
+    console.log("[FB Diag]", r.join(" | "));
+    return r.join(" | ");
+  };
+}
+
 export default function AdminLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -99,7 +119,8 @@ export default function AdminLogin() {
       fireConfetti();
       setTimeout(() => router.push("/admin"), 1500);
     } catch (err: unknown) {
-      const e = err as { message?: string };
+      const e = err as { message?: string; code?: string; customData?: Record<string, unknown> };
+      console.error("[Login Error]", { message: e.message, code: e.code, customData: e.customData, full: err });
       const msg = e.message || "Login failed. Please try again.";
       setError(msg);
       setShakeKey((k) => k + 1);
