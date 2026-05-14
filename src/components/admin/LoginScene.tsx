@@ -139,7 +139,11 @@ export default function LoginScene({
 }) {
   return (
     <div className="fixed inset-0 z-0">
-      <ErrorBoundary>
+      <ErrorBoundary
+        fallback={
+          <div className="fixed inset-0 bg-gradient-to-br from-[#0A0A1A] via-[#1a0a2e] to-[#0A0A1A]" />
+        }
+      >
         <Canvas camera={{ position: [0, 0, 5], fov: 50 }} dpr={[1, 2]}>
           <Suspense fallback={null}>
             <FloatingShapes focused={focused} submitting={submitting} />

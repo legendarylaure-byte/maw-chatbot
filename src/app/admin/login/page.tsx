@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 import { app } from "@/lib/firebase";
@@ -52,14 +52,13 @@ export default function AdminLogin() {
   const [success, setSuccess] = useState(false);
   const [shakeKey, setShakeKey] = useState(0);
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   useEffect(() => {
-    if (searchParams.get("reason") === "unauthorized") {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("reason") === "unauthorized") {
       setError("This account doesn't have admin access. Please sign in with an admin account or contact an administrator.");
     }
-  }, [searchParams]);
+  }, []);
 
   const fireConfetti = useCallback(() => {
     const defaults = {

@@ -134,28 +134,43 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     let cancelled = false;
+    const safetyTimeout = setTimeout(() => setLoading(false), 8000);
+
     const unsub = onAuthStateChanged(auth, async (u) => {
-      setUser(u);
-      if (u) {
-        for (let attempt = 0; attempt < 3; attempt++) {
-          if (cancelled) return;
-          await u.getIdToken(true);
-          const tokenResult = await u.getIdTokenResult();
-          if (tokenResult.claims.role === "admin") {
-            setIsAdmin(true);
-            setLoading(false);
-            return;
+      try {
+        setUser(u);
+        if (u) {
+          for (let attempt = 0; attempt < 3; attempt++) {
+            if (cancelled) return;
+            await u.getIdToken(true);
+            const tokenResult = await u.getIdTokenResult();
+            if (tokenResult.claims.role === "admin") {
+              setIsAdmin(true);
+              clearTimeout(safetyTimeout);
+              setLoading(false);
+              return;
+            }
+            if (attempt < 2) await new Promise((r) => setTimeout(r, 1500));
           }
-          if (attempt < 2) await new Promise((r) => setTimeout(r, 1500));
+          setIsAdmin(false);
+        } else {
+          setIsAdmin(false);
         }
+        clearTimeout(safetyTimeout);
+        setLoading(false);
+      } catch (e) {
+        console.error("Admin auth check failed:", e);
         setIsAdmin(false);
-      } else {
-        setIsAdmin(false);
+        clearTimeout(safetyTimeout);
+        setLoading(false);
       }
-      setLoading(false);
     });
-    return () => { cancelled = true; unsub(); };
+    return () => { cancelled = true; unsub(); clearTimeout(safetyTimeout); };
   }, []);
+
+  if (pathname === "/admin/login") {
+    return <div className="dark">{children}</div>;
+  }
 
   if (loading) {
     return (
@@ -170,13 +185,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     );
   }
 
-  if ((!user || !isAdmin) && pathname !== "/admin/login") {
+  if (!user || !isAdmin) {
     router.push("/admin/login?reason=unauthorized");
     return null;
-  }
-
-  if (pathname === "/admin/login") {
-    return <div className="dark">{children}</div>;
   }
 
   const handleLogout = async () => {
