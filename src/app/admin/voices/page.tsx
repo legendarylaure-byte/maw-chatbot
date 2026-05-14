@@ -25,6 +25,13 @@ export default function AdminVoices() {
   const [assignments, setAssignments] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [filter, setFilter] = useState<string>("all");
+
+  const showMessage = (msg: string) => {
+    setStatusMessage(msg);
+    setTimeout(() => setStatusMessage(null), 4000);
+  };
 
   const fetchVoices = async () => {
     setLoading(true);
@@ -85,10 +92,15 @@ export default function AdminVoices() {
     try {
       const voice = allVoices.find((v) => v.voice_id === voiceId);
       if (voice?.preview_url) {
-        const audio = new Audio(voice.preview_url);
-        audio.onended = () => setTesting(null);
-        await audio.play();
-        return;
+        try {
+          const audio = new Audio(voice.preview_url);
+          audio.onended = () => setTesting(null);
+          await audio.play();
+          showMessage(`Playing preview for ${voice.name}`);
+          return;
+        } catch {
+          showMessage("Preview playback failed (CSP or network). Trying TTS generation...");
+        }
       }
 
       const res = await fetch("/api/tts", {
@@ -101,28 +113,26 @@ export default function AdminVoices() {
       });
       if (!res.ok) {
         const err = await res.text().catch(() => "Unknown error");
-        console.error("TTS test failed:", res.status, err);
-        alert(`Voice test failed (${res.status}). Check console for details.`);
+        showMessage(`Voice test failed (${res.status}).`);
         setTesting(null);
         return;
       }
       const contentType = res.headers.get("content-type");
       if (!contentType?.includes("audio/mpeg")) {
-        console.error("Unexpected content-type:", contentType);
-        alert("Voice test returned unexpected format. Check console.");
+        showMessage("Voice test returned unexpected format.");
         setTesting(null);
         return;
       }
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const audio = new Audio(url);
-      audio.onended = () => URL.revokeObjectURL(url);
-      try {
-        await audio.play();
-      } catch {
-        alert("Browser blocked autoplay. Click the button again or check browser settings.");
-      }
-    } catch (e) { console.error("Failed to test voice:", e); }
+      audio.onended = () => { URL.revokeObjectURL(url); setTesting(null); };
+      await audio.play();
+      showMessage(`Playing TTS for ${voice?.name || voiceId}`);
+    } catch (e) {
+      showMessage("Failed to test voice. Check console for details.");
+      console.error("Failed to test voice:", e);
+    }
     setTesting(null);
   };
 
@@ -182,6 +192,11 @@ export default function AdminVoices() {
         </AdminCard>
       ) : (
         <div className="space-y-4 max-w-2xl">
+          {statusMessage && (
+            <div className="px-3 py-2 rounded-lg bg-white/10 text-sm text-white/80 text-center">
+              {statusMessage}
+            </div>
+          )}
           {voiceSlots.map((slot) => (
             <AdminCard key={slot.id} delay={0.08}>
               <div className="flex items-center justify-between mb-3">
@@ -213,9 +228,25 @@ export default function AdminVoices() {
           ))}
 
           <AdminCard delay={0.2}>
-            <h3 className="text-sm font-medium text-white mb-3">All Available Voices</h3>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-medium text-white">All Available Voices</h3>
+              <div className="flex gap-1">
+                {["all", "indian", "nepali"].map((f) => (
+                  <button key={f}
+                    onClick={() => setFilter(f)}
+                    className={`px-2 py-0.5 text-[10px] rounded-md transition ${
+                      filter === f ? "bg-white/20 text-white" : "bg-white/5 text-white/50 hover:bg-white/10"
+                    }`}
+                  >
+                    {f === "all" ? "All" : f.charAt(0).toUpperCase() + f.slice(1)}
+                  </button>
+                ))}
+              </div>
+            </div>
             <div className="space-y-1 max-h-48 overflow-y-auto">
-              {allVoices.map((v) => (
+              {allVoices
+                .filter((v) => filter === "all" || v.labels?.accent?.toLowerCase() === filter || v.name.toLowerCase().includes(filter))
+                .map((v) => (
                 <div key={v.voice_id}
                   className="flex items-center justify-between p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-all text-sm">
                   <div className="flex items-center gap-2 min-w-0">

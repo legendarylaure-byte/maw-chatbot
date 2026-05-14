@@ -17,6 +17,7 @@ export function proxy(request: NextRequest) {
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https://firebasestorage.googleapis.com https://lh3.googleusercontent.com",
     "font-src 'self' data:",
+    "media-src 'self' blob:",
     "connect-src 'self' https://*.firebaseio.com https://*.firebaseapp.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://generativelanguage.googleapis.com wss://*.firebaseio.com",
     "frame-src 'self' https://*.firebaseio.com https://*.firebaseapp.com",
     "object-src 'none'",
