@@ -1,18 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { adminDb, adminAuth } from "@/lib/firebase-admin";
+import { adminDb, verifyAdmin } from "@/lib/firebase-admin";
+import { FIRESTORE_COLLECTIONS } from "@/lib/constants";
 
-async function verifyAdmin(request: NextRequest) {
-  const authHeader = request.headers.get("authorization");
-  if (!authHeader?.startsWith("Bearer ")) return null;
-  try {
-    const token = authHeader.slice(7);
-    const decoded = await adminAuth.verifyIdToken(token);
-    if (decoded.role === "admin") return decoded;
-    return null;
-  } catch {
-    return null;
-  }
-}
+const ALLOWED_COLLECTIONS = new Set(Object.values(FIRESTORE_COLLECTIONS));
 
 export async function GET(request: NextRequest) {
   const admin = await verifyAdmin(request);
@@ -26,12 +16,12 @@ export async function GET(request: NextRequest) {
   try {
     switch (type) {
       case "memory": {
-        const snapshot = await adminDb.collection("memory").orderBy("createdAt", "desc").limit(100).get();
+        const snapshot = await adminDb.collection(FIRESTORE_COLLECTIONS.MEMORY).orderBy("createdAt", "desc").limit(100).get();
         const items = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
         return NextResponse.json({ items });
       }
       case "crawled": {
-        const snapshot = await adminDb.collection("crawled_pages").orderBy("crawledAt", "desc").limit(100).get();
+        const snapshot = await adminDb.collection(FIRESTORE_COLLECTIONS.CRAWLED_PAGES).orderBy("crawledAt", "desc").limit(100).get();
         const items = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
         return NextResponse.json({ items });
       }
@@ -56,6 +46,10 @@ export async function POST(request: NextRequest) {
 
     if (!action || !collection) {
       return NextResponse.json({ error: "action and collection required" }, { status: 400 });
+    }
+
+    if (!ALLOWED_COLLECTIONS.has(collection)) {
+      return NextResponse.json({ error: "Collection not allowed" }, { status: 403 });
     }
 
     const colRef = adminDb.collection(collection);

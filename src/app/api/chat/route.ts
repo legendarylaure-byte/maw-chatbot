@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { generateChatResponse, generateChatResponseStream, isErrorMessage } from "@/lib/gemini";
+import { generateChatResponse, generateChatResponseStream } from "@/lib/gemini";
 import { checkRateLimit, getRateLimitKey } from "@/lib/rate-limiter";
 import { validateMessageBody } from "@/lib/sanitizer";
 import { RATE_LIMITS } from "@/lib/constants";
-import { adminDb, adminAuth } from "@/lib/firebase-admin";
+import { adminAuth } from "@/lib/firebase-admin";
 import { getBotKnowledge, getUserMemory, saveUserMemory, saveConversation, searchKnowledge } from "@/lib/memory";
 
 export async function POST(request: NextRequest) {
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     }
 
     const rateLimitKey = getRateLimitKey(ip, userId);
-    const rateCheck = checkRateLimit(rateLimitKey, RATE_LIMITS.CHAT);
+    const rateCheck = await checkRateLimit(rateLimitKey, RATE_LIMITS.CHAT);
     if (!rateCheck.allowed) {
       return NextResponse.json(
         { error: "Too many requests. Please slow down." },
@@ -120,12 +120,17 @@ export async function POST(request: NextRequest) {
             }
             const fullResponse = chunks.join("");
 
-            // If Gemini returned an error disguised as a response, discard it
-            if (fullResponse && isErrorMessage(fullResponse)) {
-              console.error("⚠️ Gemini returned error-like streaming response:", fullResponse);
-              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: "Gemini API returned an unexpected response -- check API key and quota" })}\n\n`));
-              controller.close();
-              return;
+            if (fullResponse) {
+              const errPatterns = [/api.key/i, /quota/i, /rate.limit/i, /not.found/i, /unavailable/i,
+                /resting/i, /shut.down/i, /denied/i, /forbidden/i, /blocked/i,
+                /overloaded/i, /capacity/i, /maintenance/i, /cannot/i];
+              const looksLikeError = errPatterns.some((p) => p.test(fullResponse)) && fullResponse.length < 120;
+              if (looksLikeError) {
+                console.error("⚠️ Gemini returned error-like streaming response:", fullResponse);
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: "I'm having trouble generating a response right now. Please try again." })}\n\n`));
+                controller.close();
+                return;
+              }
             }
 
             // Save conversation for authenticated users
@@ -140,7 +145,7 @@ export async function POST(request: NextRequest) {
 
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({ done: true })}\n\n`));
             controller.close();
-          } catch (e) {
+            } catch {
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: "Stream failed" })}\n\n`));
             controller.close();
           }
@@ -171,10 +176,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ response });
   } catch (error) {
-    const errMsg = error instanceof Error ? error.message : String(error);
-    console.error("Chat API error:", errMsg);
+    console.error("Chat API error:", error instanceof Error ? error.message : String(error));
     return NextResponse.json(
-      { error: errMsg.includes("Gemini") ? errMsg : "Something went wrong. Please try again." },
+      { error: "Something went wrong. Please try again." },
       { status: 500 }
     );
   }

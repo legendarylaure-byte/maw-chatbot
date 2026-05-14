@@ -1,18 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { adminDb, adminAuth } from "@/lib/firebase-admin";
-
-async function verifyAdmin(request: NextRequest) {
-  const authHeader = request.headers.get("authorization");
-  if (!authHeader?.startsWith("Bearer ")) return null;
-  try {
-    const token = authHeader.slice(7);
-    const decoded = await adminAuth.verifyIdToken(token);
-    if (decoded.role === "admin") return decoded;
-    return null;
-  } catch {
-    return null;
-  }
-}
+import { adminDb, verifyAdmin } from "@/lib/firebase-admin";
 
 export async function GET(request: NextRequest) {
   const admin = await verifyAdmin(request);

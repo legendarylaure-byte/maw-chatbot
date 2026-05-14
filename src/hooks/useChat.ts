@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
+import { getAuth } from "firebase/auth";
+import { app } from "@/lib/firebase";
 
 interface Message {
   role: "user" | "assistant";
@@ -25,8 +27,13 @@ export function useChat() {
   const [isLoading, setIsLoading] = useState(false);
   const [language, setLanguage] = useState<"en" | "np">("en");
   const messagesRef = useRef(messages);
-  messagesRef.current = messages;
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const authRef = useRef(getAuth(app));
+
+  // Keep ref in sync after render (not during render)
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -51,7 +58,8 @@ export function useChat() {
     setIsLoading(true);
 
     try {
-      const token = localStorage.getItem("mawbot-token");
+      const user = authRef.current.currentUser;
+      const token = user ? await user.getIdToken() : null;
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 60000);
 
@@ -83,37 +91,62 @@ export function useChat() {
         const reader = res.body!.getReader();
         const decoder = new TextDecoder();
         let botText = "";
+        let buffer = "";
 
         while (true) {
           const { done, value } = await reader.read();
-          if (done) break;
+          if (done) {
+            // Process any remaining data in the buffer
+            if (buffer.trim()) {
+              const remainingLines = buffer.split("\n").filter((l) => l.startsWith("data: "));
+              for (const line of remainingLines) {
+                try {
+                  const data = JSON.parse(line.slice(6));
+                  if (data.done || data.error) break;
+                  if (data.text) {
+                    botText += data.text;
+                    updateAssistantMessage(botText);
+                  }
+                } catch { /* ignore partial */ }
+              }
+            }
+            break;
+          }
 
           const chunk = decoder.decode(value, { stream: true });
-          const lines = chunk.split("\n").filter((l) => l.startsWith("data: "));
+          buffer += chunk;
+
+          // Process complete lines from the buffer
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || ""; // Keep incomplete line in buffer
 
           for (const line of lines) {
+            if (!line.startsWith("data: ")) continue;
             try {
               const data = JSON.parse(line.slice(6));
               if (data.done) break;
               if (data.error) {
-                console.error("Stream error:", data.error);
                 throw new Error(data.error);
               }
               if (data.text) {
                 botText += data.text;
-                setMessages((prev) => {
-                    const updated = [...prev];
-                    const lastIdx = updated.length - 1;
-                    if (lastIdx >= 0 && updated[lastIdx].role === "assistant") {
-                      updated[lastIdx] = { role: "assistant", content: botText };
-                    }
-                    return updated;
-                  });
+                updateAssistantMessage(botText);
               }
             } catch (e) {
               console.error("SSE parse error:", e);
             }
           }
+        }
+
+        function updateAssistantMessage(text: string) {
+          setMessages((prev) => {
+            const updated = [...prev];
+            const lastIdx = updated.length - 1;
+            if (lastIdx >= 0 && updated[lastIdx].role === "assistant") {
+              updated[lastIdx] = { role: "assistant", content: text };
+            }
+            return updated;
+          });
         }
         setIsLoading(false);
       } else {

@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
   const forwarded = request.headers.get("x-forwarded-for") || "127.0.0.1";
   const ip = forwarded.split(",")[0].trim();
   const rateLimitKey = getRateLimitKey(ip, "feedback");
-  const rateCheck = checkRateLimit(rateLimitKey, { maxRequests: 60, windowMinutes: 1 });
+  const rateCheck = await checkRateLimit(rateLimitKey, { maxRequests: 60, windowMinutes: 1 });
   if (!rateCheck.allowed) {
     return NextResponse.json(
       { error: "Too many requests" },

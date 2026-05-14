@@ -2,6 +2,8 @@
 
 import { motion } from "framer-motion";
 import { Volume2, StopCircle } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { FeedbackButtons } from "./FeedbackButtons";
 import { extractCards, RichCards } from "./RichCards";
 
@@ -45,13 +47,19 @@ export function ChatBubble({ message, language, voiceId, messageIndex, playAudio
     }
   };
 
-  const renderContent = (content: string) => {
-    const formatted = content
-      .replace(/\*\*(.*?)\*\*/g, '<strong class="text-[var(--color-maw-magenta)]">$1</strong>')
-      .replace(/\* (.*?)(\n|$)/g, '<span class="block text-[var(--color-maw-blue)]">• $1</span>')
-      .replace(/### (.*?)(\n|$)/g, '<div class="text-[var(--color-maw-purple)] font-semibold mt-2 mb-1">$1</div>')
-      .replace(/\n/g, "<br/>");
-    return formatted;
+  const MarkdownComponents = {
+    strong: ({ children, ...props }: React.ComponentPropsWithoutRef<"strong">) => (
+      <strong {...props} className="text-[var(--color-maw-magenta)]">{children}</strong>
+    ),
+    h3: ({ children, ...props }: React.ComponentPropsWithoutRef<"h3">) => (
+      <h3 {...props} className="text-[var(--color-maw-purple)] font-semibold mt-2 mb-1">{children}</h3>
+    ),
+    li: ({ children, ...props }: React.ComponentPropsWithoutRef<"li">) => (
+      <li {...props} className="block text-[var(--color-maw-blue)]">• {children}</li>
+    ),
+    p: ({ children, ...props }: React.ComponentPropsWithoutRef<"p">) => (
+      <p {...props} className="block leading-relaxed">{children}</p>
+    ),
   };
 
   return (
@@ -65,10 +73,11 @@ export function ChatBubble({ message, language, voiceId, messageIndex, playAudio
         /* User bubble */
         <div className="max-w-[85%] md:max-w-[70%] ml-12">
           <div className="bg-[var(--gradient-user)] text-[var(--text-on-user)] rounded-2xl rounded-br-md px-4 py-3 shadow-lg shadow-[var(--color-maw-indigo)]/20 border border-[var(--border-glass)]">
-            <div
-              className={`text-sm leading-relaxed ${language === "np" ? "lang-np" : ""} text-[var(--text-on-user)]`}
-              dangerouslySetInnerHTML={{ __html: renderContent(text) }}
-            />
+            <div className={`text-sm ${language === "np" ? "lang-np" : ""} text-[var(--text-on-user)]`}>
+              <ReactMarkdown components={MarkdownComponents} remarkPlugins={[remarkGfm]}>
+                {text}
+              </ReactMarkdown>
+            </div>
           </div>
         </div>
       ) : (
@@ -85,12 +94,11 @@ export function ChatBubble({ message, language, voiceId, messageIndex, playAudio
                   MAWbot
                 </span>
               </div>
-              <div
-                className={`text-sm leading-relaxed ${language === "np" ? "lang-np" : ""} text-[var(--text-primary)]`}
-                dangerouslySetInnerHTML={{
-                  __html: renderContent(displayText),
-                }}
-              />
+              <div className={`text-sm ${language === "np" ? "lang-np" : ""} text-[var(--text-primary)]`}>
+                <ReactMarkdown components={MarkdownComponents} remarkPlugins={[remarkGfm]}>
+                  {displayText}
+                </ReactMarkdown>
+              </div>
               <RichCards cards={cards} />
               {/* Source badges */}
               {sources.length > 0 && (

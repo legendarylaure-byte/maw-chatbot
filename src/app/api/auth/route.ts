@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { adminDb, adminAuth } from "@/lib/firebase-admin";
+import { adminAuth } from "@/lib/firebase-admin";
 import { checkRateLimit, getRateLimitKey } from "@/lib/rate-limiter";
 import { RATE_LIMITS } from "@/lib/constants";
 
@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
   try {
     const forwarded = request.headers.get("x-forwarded-for") || "127.0.0.1";
     const ip = forwarded.split(",")[0].trim();
-    const rateCheck = checkRateLimit(getRateLimitKey(ip), RATE_LIMITS.AUTH);
+    const rateCheck = await checkRateLimit(getRateLimitKey(ip), RATE_LIMITS.AUTH);
     if (!rateCheck.allowed) {
       return NextResponse.json({ error: "Too many attempts" }, { status: 429 });
     }

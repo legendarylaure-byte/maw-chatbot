@@ -72,6 +72,20 @@ service cloud.firestore {
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
       allow read: if request.auth != null && request.auth.token.role == 'admin';
+
+      // Only allow specific fields to be written by users
+      allow create: if request.auth != null && request.auth.uid == userId
+        && request.resource.data.keys().hasAll(['displayName', 'email', 'createdAt'])
+        && request.resource.data.keys().size() <= 5;
+      allow update: if request.auth != null && request.auth.uid == userId
+        && request.resource.data.keys().hasAll(['displayName', 'email'])
+        && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['displayName', 'email', 'photoURL', 'updatedAt']);
+    }
+
+    // Rate limits - server-side only
+    match /rate_limits/{doc} {
+      allow read, write: if false;
     }
 
     // Deny everything else
