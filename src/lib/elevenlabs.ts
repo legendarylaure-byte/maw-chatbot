@@ -2,11 +2,17 @@ const API_KEY = process.env.ELEVENLABS_API_KEY;
 const BASE_URL = "https://api.elevenlabs.io/v1";
 
 export async function getVoices() {
-  if (!API_KEY) return [];
+  if (!API_KEY) {
+    console.error("ElevenLabs API key is not configured");
+    return [];
+  }
   const res = await fetch(`${BASE_URL}/voices`, {
     headers: { "xi-api-key": API_KEY },
   });
-  if (!res.ok) return [];
+  if (!res.ok) {
+    console.error(`ElevenLabs getVoices failed: ${res.status} ${res.statusText}`);
+    return [];
+  }
   const data = await res.json();
   return data.voices || [];
 }
@@ -43,7 +49,11 @@ export async function generateSpeech(
     body: JSON.stringify(body),
   });
 
-  if (!res.ok) return null;
+  if (!res.ok) {
+    const errBody = await res.text().catch(() => "");
+    console.error(`ElevenLabs TTS failed: ${res.status} ${res.statusText} — ${errBody.slice(0, 200)}`);
+    return null;
+  }
 
   if (options?.streaming && res.body) {
     return res.body;

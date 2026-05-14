@@ -10,6 +10,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "crawl": "npx tsx scripts/crawl-all.ts",
+    "backfill-embeddings": "npx tsx scripts/backfill-embeddings.ts",
     "fix-knowledge": "npx tsx scripts/fix-knowledge.ts",
     "security-scan": "npx tsx scripts/security-scan.ts"
   },

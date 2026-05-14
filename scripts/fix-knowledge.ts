@@ -43,6 +43,16 @@ interface MemoryEntry {
   createdAt: string;
 }
 
+async function getEmbedding(text: string): Promise<number[]> {
+  const { GoogleGenerativeAI } = await import("@google/generative-ai");
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) throw new Error("GEMINI_API_KEY not configured");
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({ model: "text-embedding-004" });
+  const result = await model.embedContent(text.slice(0, 3000));
+  return result.embedding.values;
+}
+
 const CORRECT_ENTRIES: MemoryEntry[] = [
   {
     content: {
@@ -207,12 +217,21 @@ async function main() {
 
   let added = 0;
   for (const entry of CORRECT_ENTRIES) {
-    await db.collection("memory").add(entry);
+    let embedding: number[] = [];
+    try {
+      const text = `${entry.content.en}\n${entry.keywords.join(", ")}`;
+      embedding = await getEmbedding(text);
+      console.log(`  ✓ Embedding computed for: ${entry.content.en.split("\n")[0]}`);
+    } catch (e) {
+      console.warn(`  ⚠ Embedding failed for entry, continuing without: ${e}`);
+    }
+
+    await db.collection("memory").add({ ...entry, embedding });
     console.log(`  ✓ Added: ${entry.content.en.split("\n")[0]}`);
     added++;
   }
 
-  console.log(`\n✅ Done! Added ${added} correct entries.`);
+  console.log(`\n✅ Done! Added ${added} correct entries with embeddings.`);
   console.log("Run: npm run crawl  to populate crawled_pages with fresh data.");
   process.exit(0);
 }

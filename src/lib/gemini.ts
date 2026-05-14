@@ -66,7 +66,15 @@ export async function generateChatResponse(
   contextKnowledge?: string
 ): Promise<string> {
   const m = getModel();
-  const trimmed = messages.length > 20 ? messages.slice(-20) : messages;
+  const MAX_TOKENS = 8000;
+  let tokenCount = 0;
+  const trimmed: ChatMessage[] = [];
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const tokens = Math.ceil(messages[i].content.length / 4);
+    if (tokenCount + tokens > MAX_TOKENS) break;
+    tokenCount += tokens;
+    trimmed.unshift(messages[i]);
+  }
   const history = trimmed.slice(0, -1).map((msg) => ({
     role: msg.role === "assistant" ? "model" : "user",
     parts: [{ text: msg.content }],
@@ -100,7 +108,15 @@ export async function generateChatResponseStream(
   contextKnowledge?: string
 ): Promise<ReadableStream<string>> {
   const m = getModel();
-  const trimmed = messages.length > 20 ? messages.slice(-20) : messages;
+  const MAX_TOKENS = 8000;
+  let tokenCount = 0;
+  const trimmed: ChatMessage[] = [];
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const tokens = Math.ceil(messages[i].content.length / 4);
+    if (tokenCount + tokens > MAX_TOKENS) break;
+    tokenCount += tokens;
+    trimmed.unshift(messages[i]);
+  }
   const history = trimmed.slice(0, -1).map((msg) => ({
     role: msg.role === "assistant" ? "model" : "user",
     parts: [{ text: msg.content }],

@@ -47,8 +47,8 @@ export async function POST(request: NextRequest) {
     let contextKnowledge = "";
     try {
       const [botKnowledge, ragResults] = await Promise.all([
-        getBotKnowledge(language),
-        searchKnowledge(message, language, 3),
+        getBotKnowledge(language, message),
+        searchKnowledge(message, language, 5),
       ]);
 
       const knowledgeMap = new Map<string, boolean>();

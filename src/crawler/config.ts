@@ -7,11 +7,11 @@ export interface CrawlConfig {
 }
 
 export const CRAWL_CONFIG: CrawlConfig = {
-  rateLimitMs: 1000,
-  maxConcurrency: 5,
+  rateLimitMs: 1200,
+  maxConcurrency: 3,
   maxRetries: 3,
   timeoutMs: 30000,
-  maxDepth: 2,
+  maxDepth: 3,
 };
 
 export const START_URLS: string[] = [

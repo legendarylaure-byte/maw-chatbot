@@ -52,21 +52,45 @@ export default function AdminVoices() {
     setLoading(false);
   };
 
+  const loadSavedAssignments = async () => {
+    try {
+      const res = await fetch("/api/admin/memory", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "get", collection: "admin_settings", id: "voices",
+        }),
+      });
+      const data = await res.json();
+      if (data?.data?.assignments) {
+        setAssignments(data.data.assignments);
+      }
+    } catch (e) { console.error("Failed to load saved voice assignments:", e); }
+  };
+
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        await fetchVoices();
+        await Promise.all([fetchVoices(), loadSavedAssignments()]);
       }
       setLoading(false);
     });
     return () => unsub();
-    // Mount-only auth listener — adding fetchVoices would re-register on every render
+    // Mount-only auth listener
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const testVoice = async (voiceId: string) => {
     setTesting(voiceId);
     try {
+      const voice = allVoices.find((v) => v.voice_id === voiceId);
+      if (voice?.preview_url) {
+        const audio = new Audio(voice.preview_url);
+        audio.onended = () => setTesting(null);
+        await audio.play();
+        return;
+      }
+
       const res = await fetch("/api/tts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -75,11 +99,29 @@ export default function AdminVoices() {
           voiceId,
         }),
       });
+      if (!res.ok) {
+        const err = await res.text().catch(() => "Unknown error");
+        console.error("TTS test failed:", res.status, err);
+        alert(`Voice test failed (${res.status}). Check console for details.`);
+        setTesting(null);
+        return;
+      }
+      const contentType = res.headers.get("content-type");
+      if (!contentType?.includes("audio/mpeg")) {
+        console.error("Unexpected content-type:", contentType);
+        alert("Voice test returned unexpected format. Check console.");
+        setTesting(null);
+        return;
+      }
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const audio = new Audio(url);
       audio.onended = () => URL.revokeObjectURL(url);
-      await audio.play();
+      try {
+        await audio.play();
+      } catch {
+        alert("Browser blocked autoplay. Click the button again or check browser settings.");
+      }
     } catch (e) { console.error("Failed to test voice:", e); }
     setTesting(null);
   };

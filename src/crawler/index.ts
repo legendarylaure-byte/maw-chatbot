@@ -4,7 +4,7 @@ import { parsePage } from "./parser";
 import { compressContent, splitIntoSections } from "./compressor";
 import { summarizePageContent } from "./summarizer";
 import { getContentHash, isDuplicate, resetDeduper } from "./deduper";
-import { storePage, updateSiteStatus } from "./storage";
+import { storePage, updateSiteStatus, promoteToMemory } from "./storage";
 import { discoverInternalLinks, getDomain, normalizeUrl } from "./discoverer";
 
 const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -47,6 +47,13 @@ async function crawlUrl(
 
   if (stored) {
     domainPageCount.set(domain, (domainPageCount.get(domain) || 0) + 1);
+    await promoteToMemory({
+      url: normalized,
+      title: parsed.title,
+      description: parsed.description,
+      summary,
+      content: compressed,
+    });
   }
 
   if (depth < CRAWL_CONFIG.maxDepth) {
