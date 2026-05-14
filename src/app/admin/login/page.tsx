@@ -56,6 +56,7 @@ export default function AdminLogin() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("reason") === "unauthorized") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setError("This account doesn't have admin access. Please sign in with an admin account or contact an administrator.");
     }
   }, []);
