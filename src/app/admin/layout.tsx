@@ -133,18 +133,28 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
 
   useEffect(() => {
+    let cancelled = false;
     const unsub = onAuthStateChanged(auth, async (u) => {
       setUser(u);
       if (u) {
-        await u.getIdToken(true);
-        const tokenResult = await u.getIdTokenResult();
-        setIsAdmin(tokenResult.claims.role === "admin");
+        for (let attempt = 0; attempt < 3; attempt++) {
+          if (cancelled) return;
+          await u.getIdToken(true);
+          const tokenResult = await u.getIdTokenResult();
+          if (tokenResult.claims.role === "admin") {
+            setIsAdmin(true);
+            setLoading(false);
+            return;
+          }
+          if (attempt < 2) await new Promise((r) => setTimeout(r, 1500));
+        }
+        setIsAdmin(false);
       } else {
         setIsAdmin(false);
       }
       setLoading(false);
     });
-    return () => unsub();
+    return () => { cancelled = true; unsub(); };
   }, []);
 
   if (loading) {
@@ -161,7 +171,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   if ((!user || !isAdmin) && pathname !== "/admin/login") {
-    router.push("/admin/login");
+    router.push("/admin/login?reason=unauthorized");
     return null;
   }
 

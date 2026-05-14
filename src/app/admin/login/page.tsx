@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useCallback, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 import { app } from "@/lib/firebase";
@@ -52,6 +52,14 @@ export default function AdminLogin() {
   const [success, setSuccess] = useState(false);
   const [shakeKey, setShakeKey] = useState(0);
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams.get("reason") === "unauthorized") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setError("This account doesn't have admin access. Please sign in with an admin account or contact an administrator.");
+    }
+  }, [searchParams]);
 
   const fireConfetti = useCallback(() => {
     const defaults = {
@@ -70,7 +78,23 @@ export default function AdminLogin() {
     setLoading(true);
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCred = await signInWithEmailAndPassword(auth, email, password);
+
+      let isAdmin = false;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        await userCred.user.getIdToken(true);
+        const tokenResult = await userCred.user.getIdTokenResult();
+        isAdmin = tokenResult.claims.role === "admin";
+        if (isAdmin) break;
+        if (attempt < 2) await new Promise((r) => setTimeout(r, 1500));
+      }
+
+      if (!isAdmin) {
+        setError("This account doesn't have admin access. Please contact an administrator.");
+        setLoading(false);
+        return;
+      }
+
       setSuccess(true);
       fireConfetti();
       setTimeout(() => router.push("/admin"), 1500);

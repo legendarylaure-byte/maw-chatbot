@@ -4,6 +4,7 @@ import { useRef, useState, Suspense } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Float, Text } from "@react-three/drei";
 import * as THREE from "three";
+import ErrorBoundary from "./ErrorBoundary";
 
 function FloatingShapes({
   focused,
@@ -138,11 +139,13 @@ export default function LoginScene({
 }) {
   return (
     <div className="fixed inset-0 z-0">
-      <Canvas camera={{ position: [0, 0, 5], fov: 50 }} dpr={[1, 2]}>
-        <Suspense fallback={null}>
-          <FloatingShapes focused={focused} submitting={submitting} />
-        </Suspense>
-      </Canvas>
+      <ErrorBoundary>
+        <Canvas camera={{ position: [0, 0, 5], fov: 50 }} dpr={[1, 2]}>
+          <Suspense fallback={null}>
+            <FloatingShapes focused={focused} submitting={submitting} />
+          </Suspense>
+        </Canvas>
+      </ErrorBoundary>
     </div>
   );
 }
