@@ -227,6 +227,18 @@ export default function AdminVoices() {
         }
       />
 
+      <AdminCard delay={0} hover={false}>
+        <div className="text-xs text-white/70 space-y-2">
+          <p className="text-sm font-medium text-white">How voices work</p>
+          <ol className="list-decimal list-inside space-y-1 text-white/50">
+            <li><strong className="text-white/80">Browse</strong> Indian/Nepali voices using the accent filter below, or use <strong className="text-white/80">Refresh Voices</strong> to see all voices in your ElevenLabs account</li>
+            <li><strong className="text-white/80">Assign</strong> a voice to each slot (English Male, English Female, Nepali Male, Nepali Female)</li>
+            <li><strong className="text-white/80">Save</strong> — your assignments are saved to Firestore</li>
+            <li>In the <strong className="text-white/80">chat</strong>, users will see <span className="text-white/80">Male</span> and <span className="text-white/80">Female</span> options that use the voices you assigned here. Switching language automatically switches to the matching voice.</li>
+          </ol>
+        </div>
+      </AdminCard>
+
       {loading ? (
         <p className="text-sm text-white/50">Loading voices from ElevenLabs...</p>
       ) : allVoices.length === 0 ? (
