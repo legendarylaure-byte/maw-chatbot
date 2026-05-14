@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { RefreshCw } from "lucide-react";
 
@@ -18,19 +18,23 @@ export function TriviaQuiz() {
   const [showResult, setShowResult] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadTrivia();
-  }, []);
+  const cancelledRef = useRef(false);
 
-  const loadTrivia = async () => {
+  const loadTrivia = () => {
+    cancelledRef.current = false;
     setLoading(true);
-    try {
-      const res = await fetch("/api/games?type=trivia");
-      const data = await res.json();
-      setQuestions(data.questions || []);
-    } catch (e) { console.error("Failed to load trivia quiz:", e); }
-    setLoading(false);
+    fetch("/api/games?type=trivia")
+      .then(res => res.json())
+      .then(data => { if (!cancelledRef.current) setQuestions(data.questions || []); })
+      .catch(e => console.error("Failed to load trivia quiz:", e))
+      .finally(() => { if (!cancelledRef.current) setLoading(false); });
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadTrivia();
+    return () => { cancelledRef.current = true; };
+  }, []);
 
   const handleAnswer = (option: string) => {
     if (selected) return;

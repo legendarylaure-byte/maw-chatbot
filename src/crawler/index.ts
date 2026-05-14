@@ -62,30 +62,6 @@ async function crawlUrl(
   }
 }
 
-async function crawlUrlWithConcurrency(
-  urls: string[],
-  depth: number,
-  visited: Set<string>,
-  domainPageCount: Map<string, number>,
-  concurrency: number
-): Promise<void> {
-  const queue = [...urls];
-  const active = new Set<Promise<void>>();
-
-  const next = async () => {
-    while (queue.length > 0) {
-      const url = queue.shift()!;
-      const normalized = normalizeUrl(url);
-      if (visited.has(normalized)) continue;
-      await delay(CRAWL_CONFIG.rateLimitMs);
-      await crawlUrl(url, depth, visited, domainPageCount);
-    }
-  };
-
-  const workers = Array.from({ length: Math.min(concurrency, urls.length) }, () => next());
-  await Promise.all(workers);
-}
-
 export async function runCrawl() {
   console.log(`Starting MAWbot crawler for ${START_URLS.length} seed URLs...`);
   console.log(`Max depth: ${CRAWL_CONFIG.maxDepth}, Concurrency: ${CRAWL_CONFIG.maxConcurrency}`);

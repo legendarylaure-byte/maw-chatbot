@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { app } from "@/lib/firebase";
-import { Plus, Trash2, Edit3, ExternalLink, Search } from "lucide-react";
+import { Plus, Trash2, Edit3, ExternalLink } from "lucide-react";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import AdminCard from "@/components/admin/AdminCard";
 import AdminInput from "@/components/admin/AdminInput";
@@ -44,6 +44,15 @@ export default function AdminMemory() {
   });
   const [token, setToken] = useState("");
 
+  const fetchItems = async (t: string) => {
+    try {
+      const res = await fetch("/api/admin/memory?type=memory", {
+        headers: { Authorization: `Bearer ${t}` },
+      });
+      setItems((await res.json()).items || []);
+    } catch (e) { console.error("Failed to fetch memory items", e); }
+  };
+
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -55,15 +64,6 @@ export default function AdminMemory() {
     });
     return () => unsub();
   }, []);
-
-  const fetchItems = async (t: string) => {
-    try {
-      const res = await fetch("/api/admin/memory?type=memory", {
-        headers: { Authorization: `Bearer ${t}` },
-      });
-      setItems((await res.json()).items || []);
-    } catch (e) { console.error("Failed to fetch memory items", e); }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

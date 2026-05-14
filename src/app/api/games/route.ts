@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { generateChatResponse } from "@/lib/gemini";
 
 const TRIVIA_QUESTIONS = [
   { q: "When was MAW Group established?", a: "1964", options: ["1950", "1964", "1971", "1980"] },

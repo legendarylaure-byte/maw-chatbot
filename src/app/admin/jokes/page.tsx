@@ -25,6 +25,16 @@ export default function AdminJokes() {
   const [en, setEn] = useState("");
   const [np, setNp] = useState("");
 
+  const loadJokes = async (t: string) => {
+    try {
+      const res = await fetch("/api/admin/memory?type=memory", {
+        headers: { Authorization: `Bearer ${t}` },
+      });
+      const data = await res.json();
+      setJokes((data.items || []).filter((i: Joke & { category: string }) => i.category === "joke"));
+    } catch (e) { console.error("Failed to load jokes:", e); }
+  };
+
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -36,16 +46,6 @@ export default function AdminJokes() {
     });
     return () => unsub();
   }, []);
-
-  const loadJokes = async (t: string) => {
-    try {
-      const res = await fetch("/api/admin/memory?type=memory", {
-        headers: { Authorization: `Bearer ${t}` },
-      });
-      const data = await res.json();
-      setJokes((data.items || []).filter((i: Joke & { category: string }) => i.category === "joke"));
-    } catch (e) { console.error("Failed to load jokes:", e); }
-  };
 
   const addJoke = async () => {
     if (!en.trim()) return;

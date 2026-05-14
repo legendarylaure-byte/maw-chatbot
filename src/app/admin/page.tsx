@@ -6,7 +6,6 @@ import { app } from "@/lib/firebase";
 import { Brain, MessageSquare, Gamepad2, Users, ArrowRight, Sparkles } from "lucide-react";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import AdminCard from "@/components/admin/AdminCard";
-import AdminButton from "@/components/admin/AdminButton";
 
 const auth = getAuth(app);
 

@@ -24,6 +24,16 @@ export default function AdminQuizzes() {
   const [en, setEn] = useState("");
   const [np, setNp] = useState("");
 
+  const loadQuestions = async (t: string) => {
+    try {
+      const res = await fetch("/api/admin/memory?type=memory", {
+        headers: { Authorization: `Bearer ${t}` },
+      });
+      const data = await res.json();
+      setQuestions((data.items || []).filter((i: Question & { category: string }) => i.category === "quiz"));
+    } catch (e) { console.error("Failed to load questions:", e); }
+  };
+
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -35,16 +45,6 @@ export default function AdminQuizzes() {
     });
     return () => unsub();
   }, []);
-
-  const loadQuestions = async (t: string) => {
-    try {
-      const res = await fetch("/api/admin/memory?type=memory", {
-        headers: { Authorization: `Bearer ${t}` },
-      });
-      const data = await res.json();
-      setQuestions((data.items || []).filter((i: Question & { category: string }) => i.category === "quiz"));
-    } catch (e) { console.error("Failed to load questions:", e); }
-  };
 
   const addQuestion = async () => {
     if (!en.trim()) return;

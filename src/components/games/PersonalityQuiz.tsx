@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 interface QuizQuestion {
   id: number;
@@ -21,17 +21,23 @@ export function PersonalityQuiz() {
   const [result, setResult] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => { loadQuiz(); }, []);
+  const cancelledRef = useRef(false);
 
-  const loadQuiz = async () => {
+  const loadQuiz = () => {
+    cancelledRef.current = false;
     setLoading(true);
-    try {
-      const res = await fetch("/api/games?type=personality-quiz");
-      const data = await res.json();
-      setQuiz(data);
-    } catch (e) { console.error("Failed to load personality quiz:", e); }
-    setLoading(false);
+    fetch("/api/games?type=personality-quiz")
+      .then(res => res.json())
+      .then(data => { if (!cancelledRef.current) setQuiz(data); })
+      .catch(e => console.error("Failed to load personality quiz:", e))
+      .finally(() => { if (!cancelledRef.current) setLoading(false); });
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadQuiz();
+    return () => { cancelledRef.current = true; };
+  }, []);
 
   const handleAnswer = (value: string) => {
     const newAnswers = [...answers, value];

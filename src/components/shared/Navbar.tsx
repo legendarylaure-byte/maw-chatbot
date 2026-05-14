@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
 import { LogIn, LogOut, VolumeX, Volume2, Zap, Snail, Rabbit, Turtle, Loader2, Home } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useSeasonal } from "@/hooks/useSeasonal";
@@ -35,7 +37,7 @@ function SpeedIcon({ speed, current }: { speed: number; current: number }) {
   return <Rabbit size={12} className={isActive ? "text-[var(--color-maw-magenta)]" : ""} />;
 }
 
-export function Navbar({ language, onLanguageChange, darkMode, onDarkModeChange, selectedVoice, onVoiceChange, isPlaying, onStopAudio, playbackSpeed = 1.0, onPlaybackSpeedChange, ttsLoading, autoPlayEnabled, onAutoPlayToggle, onResetChat }: NavbarProps) {
+export function Navbar({ language, onLanguageChange, darkMode, onDarkModeChange, onVoiceChange, isPlaying, onStopAudio, playbackSpeed = 1.0, onPlaybackSpeedChange, ttsLoading, autoPlayEnabled, onAutoPlayToggle, onResetChat }: NavbarProps) {
   const { user, isAdmin, logout } = useAuth();
   const seasonal = useSeasonal();
   const [showAuth, setShowAuth] = useState(false);
@@ -44,12 +46,14 @@ export function Navbar({ language, onLanguageChange, darkMode, onDarkModeChange,
     <>
       <header className="glass border-b border-[var(--border-color)] px-4 py-3 flex items-center justify-between shrink-0 z-20">
         <div className="flex items-center gap-3">
-          <a href="/" className="flex items-center gap-3 group">
+          <Link href="/" className="flex items-center gap-3 group">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[var(--color-maw-blue)] via-[var(--color-maw-indigo)] to-[var(--color-maw-magenta)] p-[2px] shadow-lg shadow-[var(--color-maw-indigo)]/20 group-hover:shadow-[var(--color-maw-indigo)]/40 transition-shadow">
               <div className="w-full h-full rounded-xl bg-[var(--bg-primary)] flex items-center justify-center">
-                <img
+                <Image
                   src="/logo.png"
                   alt="MAW"
+                  width={24}
+                  height={24}
                   className="w-6 h-6 object-contain"
                   onError={(e) => {
                     (e.currentTarget as HTMLImageElement).style.display = "none";
@@ -71,7 +75,7 @@ export function Navbar({ language, onLanguageChange, darkMode, onDarkModeChange,
                 </p>
               )}
             </div>
-          </a>
+          </Link>
         </div>
 
         <div className="flex items-center gap-2">
@@ -157,12 +161,12 @@ export function Navbar({ language, onLanguageChange, darkMode, onDarkModeChange,
           {user ? (
             <div className="flex items-center gap-2">
               {isAdmin && (
-                <a
+                <Link
                   href="/admin"
                   className="text-[11px] px-2 py-1 rounded-full bg-[var(--color-maw-magenta)]/20 text-[var(--color-maw-magenta)] hover:bg-[var(--color-maw-magenta)]/30 transition"
                 >
                   Admin
-                </a>
+                </Link>
               )}
               <button
                 onClick={logout}

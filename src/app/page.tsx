@@ -65,7 +65,7 @@ function ChatContent() {
     lastAutoPlayedRef.current = msgIndex;
     const lang = language === "np" ? "ne-NP" : "en-US";
     playAudio(lastMsg.content, selectedVoice || undefined, lang, playbackSpeed);
-  }, [messages, isLoading, showWelcome, language, selectedVoice, playAudio, playbackSpeed]);
+  }, [messages, isLoading, showWelcome, language, selectedVoice, playAudio, playbackSpeed, autoPlayEnabled]);
 
   const showPrompts = messages.length === 1 && !showWelcome;
 

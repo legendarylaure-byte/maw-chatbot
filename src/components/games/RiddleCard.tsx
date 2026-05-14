@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Lightbulb, RefreshCw } from "lucide-react";
 
 interface Riddle {
@@ -13,18 +13,24 @@ export function RiddleCard() {
   const [showAnswer, setShowAnswer] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => { loadRiddle(); }, []);
+  const cancelledRef = useRef(false);
 
-  const loadRiddle = async () => {
+  const loadRiddle = () => {
+    cancelledRef.current = false;
     setLoading(true);
     setShowAnswer(false);
-    try {
-      const res = await fetch("/api/games?type=riddle");
-      const data = await res.json();
-      setRiddle(data);
-    } catch (e) { console.error("Failed to load riddle:", e); }
-    setLoading(false);
+    fetch("/api/games?type=riddle")
+      .then(res => res.json())
+      .then(data => { if (!cancelledRef.current) setRiddle(data); })
+      .catch(e => console.error("Failed to load riddle:", e))
+      .finally(() => { if (!cancelledRef.current) setLoading(false); });
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadRiddle();
+    return () => { cancelledRef.current = true; };
+  }, []);
 
   if (loading) return <div className="text-center text-sm text-white/50 py-4">Loading...</div>;
   if (!riddle) return null;

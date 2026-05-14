@@ -179,7 +179,6 @@ async function main() {
   console.log(`Found ${existing.length} existing memory entries.\n`);
 
   // Identify entries with wrong SKODA/address data
-  const wrongKeywords = ["dhobighat", "tripureshwor skoda", "skoda dhobighat"];
   let deleted = 0;
 
   for (const doc of existing) {

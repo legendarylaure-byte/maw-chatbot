@@ -1,7 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
-
 interface SeasonalEvent {
   name: string;
   emoji: string;
@@ -17,17 +15,10 @@ const seasons: { name: string; check: () => boolean; emoji: string; color: strin
 ];
 
 export function useSeasonal(): SeasonalEvent | null {
-  const [event, setEvent] = useState<SeasonalEvent | null>(null);
-
-  useEffect(() => {
-    for (const s of seasons) {
-      if (s.check()) {
-        setEvent({ name: s.name, emoji: s.emoji, color: s.color });
-        return;
-      }
+  for (const s of seasons) {
+    if (s.check()) {
+      return { name: s.name, emoji: s.emoji, color: s.color };
     }
-    setEvent(null);
-  }, []);
-
-  return event;
+  }
+  return null;
 }

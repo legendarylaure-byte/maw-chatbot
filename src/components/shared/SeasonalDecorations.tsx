@@ -1,12 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { useSeasonal } from "@/hooks/useSeasonal";
 import { motion } from "framer-motion";
 
 export function SeasonalDecorations() {
   const seasonal = useSeasonal();
-
-  if (!seasonal) return null;
 
   const decorations: Record<string, { emoji: string; count: number }> = {
     Dashain: { emoji: "🪁", count: 5 },
@@ -16,32 +15,46 @@ export function SeasonalDecorations() {
     "Buddha Jayanti": { emoji: "🪷", count: 3 },
   };
 
-  const deco = decorations[seasonal.name] || { emoji: "✨", count: 3 };
+  const deco = decorations[seasonal?.name || ""] || { emoji: "✨", count: 3 };
+
+  const [positions] = useState(() =>
+    Array.from({ length: deco.count }, () => ({
+      initialX: Math.random() * 100,
+      initialY: Math.random() * 100,
+      animateX: Math.random() * 100,
+      animateY: Math.random() * 100,
+      duration: 10 + Math.random() * 10,
+      left: 10 + Math.random() * 80,
+      top: 10 + Math.random() * 80,
+    }))
+  );
+
+  if (!seasonal) return null;
 
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-      {Array.from({ length: deco.count }).map((_, i) => (
+      {positions.map((pos, i) => (
         <motion.div
           key={i}
           className="absolute text-2xl opacity-20"
           initial={{
-            x: Math.random() * 100,
-            y: Math.random() * 100,
+            x: pos.initialX,
+            y: pos.initialY,
             scale: 0.5,
           }}
           animate={{
-            x: Math.random() * 100,
-            y: Math.random() * 100,
+            x: pos.animateX,
+            y: pos.animateY,
             rotate: 360,
           }}
           transition={{
-            duration: 10 + Math.random() * 10,
+            duration: pos.duration,
             repeat: Infinity,
             repeatType: "reverse",
           }}
           style={{
-            left: `${10 + Math.random() * 80}%`,
-            top: `${10 + Math.random() * 80}%`,
+            left: `${pos.left}%`,
+            top: `${pos.top}%`,
           }}
         >
           {deco.emoji}

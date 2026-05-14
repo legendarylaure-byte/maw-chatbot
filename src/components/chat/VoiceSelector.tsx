@@ -21,18 +21,13 @@ export function VoiceSelector({ currentLanguage, onVoiceChange }: VoiceSelectorP
   const [open, setOpen] = useState(false);
   const [voices, setVoices] = useState<ElevenVoice[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedId, setSelectedId] = useState<string>("");
-
-  useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      setSelectedId(saved);
-      onVoiceChange(saved);
-    }
-  }, []);
+  const [selectedId, setSelectedId] = useState<string>(() => {
+    return localStorage.getItem(STORAGE_KEY) || "";
+  });
 
   useEffect(() => {
     let cancelled = false;
+    if (selectedId) onVoiceChange(selectedId);
     const fetchVoices = async () => {
       try {
         const res = await fetch("/api/tts/voices");
@@ -54,6 +49,9 @@ export function VoiceSelector({ currentLanguage, onVoiceChange }: VoiceSelectorP
     };
     fetchVoices();
     return () => { cancelled = true; };
+    // Should only run on mount — selectedId/onVoiceChange deps would
+    // re-fetch voices on every parent render or voice selection
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSelect = (voice: ElevenVoice) => {

@@ -26,16 +26,6 @@ export default function AdminVoices() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        await fetchVoices();
-      }
-      setLoading(false);
-    });
-    return () => unsub();
-  }, []);
-
   const fetchVoices = async () => {
     setLoading(true);
     try {
@@ -61,6 +51,18 @@ export default function AdminVoices() {
     } catch (e) { console.error("Failed to fetch voices:", e); }
     setLoading(false);
   };
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        await fetchVoices();
+      }
+      setLoading(false);
+    });
+    return () => unsub();
+    // Mount-only auth listener — adding fetchVoices would re-register on every render
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const testVoice = async (voiceId: string) => {
     setTesting(voiceId);

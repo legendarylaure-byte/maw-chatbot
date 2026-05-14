@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 interface DailyChallenge {
   scrambled: string;
@@ -15,19 +15,23 @@ export function WordGame() {
   const [attempts, setAttempts] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadChallenge();
-  }, []);
+  const cancelledRef = useRef(false);
 
-  const loadChallenge = async () => {
+  const loadChallenge = () => {
+    cancelledRef.current = false;
     setLoading(true);
-    try {
-      const res = await fetch("/api/games?type=daily-challenge");
-      const data = await res.json();
-      setChallenge(data);
-    } catch (e) { console.error("Failed to load word game challenge:", e); }
-    setLoading(false);
+    fetch("/api/games?type=daily-challenge")
+      .then(res => res.json())
+      .then(data => { if (!cancelledRef.current) setChallenge(data); })
+      .catch(e => console.error("Failed to load word game challenge:", e))
+      .finally(() => { if (!cancelledRef.current) setLoading(false); });
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadChallenge();
+    return () => { cancelledRef.current = true; };
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

@@ -32,6 +32,17 @@ export default function AdminCrawledData() {
   const [selected, setSelected] = useState<CrawledPage | null>(null);
   const [promoting, setPromoting] = useState(false);
 
+  const fetchPages = async (t: string) => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/admin/memory?type=crawled", {
+        headers: { Authorization: `Bearer ${t}` },
+      });
+      if (res.ok) setPages((await res.json()).items || []);
+    } catch (e) { console.error("Failed to fetch crawled pages:", e); }
+    setLoading(false);
+  };
+
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -43,17 +54,6 @@ export default function AdminCrawledData() {
     });
     return () => unsub();
   }, []);
-
-  const fetchPages = async (t: string) => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/admin/memory?type=crawled", {
-        headers: { Authorization: `Bearer ${t}` },
-      });
-      if (res.ok) setPages((await res.json()).items || []);
-    } catch (e) { console.error("Failed to fetch crawled pages:", e); }
-    setLoading(false);
-  };
 
   const promoteToMemory = async (page: CrawledPage) => {
     if (!token || !page.summary) return;

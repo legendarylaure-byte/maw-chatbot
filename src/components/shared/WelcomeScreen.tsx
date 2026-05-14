@@ -2,6 +2,7 @@
 
 import { useRef, useEffect, useCallback, useState } from "react";
 import { motion, useInView } from "framer-motion";
+import Image from "next/image";
 import confetti from "canvas-confetti";
 import { Sparkles, MessageCircle, ChevronRight, Building2, Globe2, MapPin, ExternalLink } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
@@ -213,14 +214,18 @@ export function WelcomeScreen({ language, onStart, darkMode, onDarkModeChange }:
             style={{ transformStyle: "preserve-3d" }}
           >
             <div className="w-full h-full rounded-2xl bg-[var(--bg-primary)] flex items-center justify-center">
-              <img
+              <Image
                 src="/brand-logos/maw-light.svg"
                 alt="MAW Group"
+                width={80}
+                height={80}
                 className="w-20 h-20 object-contain hidden dark:block"
               />
-              <img
+              <Image
                 src="/brand-logos/maw-dark.svg"
                 alt="MAW Group"
+                width={80}
+                height={80}
                 className="w-20 h-20 object-contain block dark:hidden"
               />
             </div>
@@ -343,13 +348,14 @@ export function WelcomeScreen({ language, onStart, darkMode, onDarkModeChange }:
                 className="shrink-0 flex items-center gap-3 px-5 py-3 rounded-xl border border-[var(--border-color)] bg-[var(--bg-glass)] card-hover cursor-pointer transition-all duration-300 hover:border-[var(--color-maw-indigo)]/50 hover:shadow-lg hover:shadow-[var(--color-maw-indigo)]/10"
               >
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--color-maw-blue)] to-[var(--color-maw-indigo)] flex items-center justify-center p-1 shrink-0">
-                  <img
+                  <Image
                     src={brand.logo}
                     alt={brand.name}
+                    width={40}
+                    height={40}
                     className="w-full h-full object-contain"
-                    loading="lazy"
                     onError={(e) => {
-                      const el = e.currentTarget;
+                      const el = e.currentTarget as HTMLImageElement;
                       el.style.display = "none";
                       const parent = el.parentElement;
                       if (parent) {
