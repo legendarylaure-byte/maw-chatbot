@@ -2,6 +2,8 @@ import { adminDb } from "@/lib/firebase-admin";
 import { FIRESTORE_COLLECTIONS } from "@/lib/constants";
 import { getEmbedding } from "@/lib/gemini";
 
+const MEMORY_EMBEDDING_DIMS = 768;
+
 interface StoredPage {
   url: string;
   domain: string;
