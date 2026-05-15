@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { generateSpeech } from "@/lib/elevenlabs";
+import { generateSpeech } from "@/lib/tts";
 import { checkRateLimit, getRateLimitKey } from "@/lib/rate-limiter";
 
 export async function POST(request: NextRequest) {
@@ -20,32 +20,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "text and voiceId required" }, { status: 400 });
     }
 
-    const audio = await generateSpeech(body.text, body.voiceId, {
-      stability: body.stability,
-      similarityBoost: body.similarityBoost,
-      style: body.style,
-      useSpeakerBoost: body.useSpeakerBoost,
-      streaming: body.streaming,
-    });
+    const audio = await generateSpeech(body.text, body.voiceId);
 
     if (!audio) {
       return NextResponse.json(
-        { error: "Voice generation failed. Check ElevenLabs configuration." },
+        { error: "Voice generation failed. Check Google Cloud TTS configuration." },
         { status: 500 }
       );
     }
 
-    if (audio instanceof ReadableStream) {
-      return new NextResponse(audio, {
-        headers: { "Content-Type": "audio/mpeg" },
-      });
-    }
-
-    const arrayBuffer = audio as ArrayBuffer;
-    return new NextResponse(arrayBuffer, {
+    return new NextResponse(audio, {
       headers: {
         "Content-Type": "audio/mpeg",
-        "Content-Length": String(arrayBuffer.byteLength),
+        "Content-Length": String(audio.byteLength),
       },
     });
   } catch (error) {

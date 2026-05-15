@@ -81,11 +81,10 @@ export function useVoice() {
     const cleanText = text.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').trim();
     if (!cleanText) return;
 
-    // Try ElevenLabs first if voiceId is provided
+    // Try Google Cloud TTS if voiceId is provided
     if (voiceId) {
       setTtsLoading(true);
 
-      // Check cache
       const cacheKey = `${voiceId}:${cleanText.slice(0, 100)}`;
       const cachedUrl = ttsCacheRef.current.get(cacheKey);
       if (cachedUrl) {
@@ -109,79 +108,13 @@ export function useVoice() {
         const res = await fetch("/api/tts", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text: cleanText, voiceId, streaming: true, style: 0.3, useSpeakerBoost: true }),
+          body: JSON.stringify({ text: cleanText, voiceId }),
         });
         if (res.ok) {
           setTtsLoading(false);
-          // Try streaming playback via MediaSource
-          if (res.body && typeof MediaSource !== "undefined") {
-            try {
-              const reader = res.body.getReader();
-              const mediaSource = new MediaSource();
-              const audioUrl = URL.createObjectURL(mediaSource);
-              const audio = new Audio(audioUrl);
-              audio.playbackRate = speed;
-              audioRef.current = audio;
-
-              mediaSource.addEventListener("sourceopen", async () => {
-                let sourceBuffer: SourceBuffer;
-                try {
-                  sourceBuffer = mediaSource.addSourceBuffer("audio/mpeg");
-                } catch {
-                  // MediaSource MP3 not supported, fall back
-                  mediaSource.endOfStream();
-                  URL.revokeObjectURL(audioUrl);
-                  throw new Error("MediaSource MP3 unsupported");
-                }
-
-                setIsPlaying(true);
-                audio.play().catch(() => {});
-
-                const pump = async () => {
-                  try {
-                    const { done, value } = await reader.read();
-                    if (done) {
-                      if (mediaSource.readyState === "open") {
-                        mediaSource.endOfStream();
-                      }
-                      return;
-                    }
-                    await new Promise<void>((resolve, reject) => {
-                      sourceBuffer.addEventListener("updateend", () => resolve(), { once: true });
-                      sourceBuffer.addEventListener("error", () => reject(), { once: true });
-                      sourceBuffer.appendBuffer(value);
-                    });
-                    pump();
-                  } catch {
-                    if (mediaSource.readyState === "open") {
-                      mediaSource.endOfStream();
-                    }
-                  }
-                };
-                pump();
-              });
-
-              audio.onended = () => {
-                setIsPlaying(false);
-                audioRef.current = null;
-                URL.revokeObjectURL(audioUrl);
-              };
-              audio.onerror = () => {
-                setIsPlaying(false);
-                audioRef.current = null;
-                URL.revokeObjectURL(audioUrl);
-              };
-              return;
-            } catch {
-              // MediaSource failed, fall through to blob approach
-            }
-          }
-
-          // Non-streaming fallback (blob)
           const blob = await res.blob();
           const url = URL.createObjectURL(blob);
 
-          // Cache the blob URL
           if (ttsCacheRef.current.size >= CACHE_MAX) {
             const firstKey = ttsCacheRef.current.keys().next().value;
             if (firstKey) ttsCacheRef.current.delete(firstKey);

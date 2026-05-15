@@ -1,11 +1,6 @@
 import { NextResponse } from "next/server";
-import { getVoices } from "@/lib/elevenlabs";
+import { getVoices } from "@/lib/tts";
 
 export async function GET() {
-  try {
-    const voices = await getVoices();
-    return NextResponse.json({ voices });
-  } catch {
-    return NextResponse.json({ voices: [] });
-  }
+  return NextResponse.json({ voices: getVoices() });
 }
